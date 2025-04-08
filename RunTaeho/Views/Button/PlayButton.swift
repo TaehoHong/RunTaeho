@@ -7,40 +7,81 @@
 
 import SwiftUI
 
-struct PlayButton: View {
-    // 상수값들을 타입 프로퍼티로 정의
-    private static let buttonSize: CGFloat = 75
-    private static let triangleWidth: CGFloat = 20
-    private static let triangleHeight: CGFloat = 22
-    private static let triangleOffset: CGFloat = 3
+// 버튼 관련 상수값들을 논리적으로 그룹화
+private enum Constants {
+    enum Button {
+        static let size: CGFloat = 75
+        static let blurRadius: CGFloat = 3
+    }
     
-    var body: some View {
-        ZStack {
-            // 초록색 원형 배경
-            Circle()
-                .fill(Color(red: 59/255, green: 162/255, blue: 57/255)) // #3BA239
-                .frame(width: Self.buttonSize, height: Self.buttonSize)
-            
-            // 흰색 재생 삼각형
-            PlaySymbol()
-                .fill(Color.white)
-                .frame(width: Self.triangleWidth, height: Self.triangleHeight)
-                .offset(x: Self.triangleOffset) // 살짝 오른쪽으로 이동
-        }
+    enum Triangle {
+        static let width: CGFloat = 20
+        static let height: CGFloat = 22
+        static let offset: CGFloat = 3
+    }
+    
+    static var buttonFrame: CGRect {
+        let size = Button.size + Button.blurRadius * 2
+        return CGRect(x: 0, y: 0, width: size, height: size)
     }
 }
 
-// 재생 심볼을 별도의 Shape로 분리
-struct PlaySymbol: Shape {
+struct PlayButton: View {
+    @State private var isPressed = false
+    let action: () -> Void
+    
+    // MARK: - Body
+    var body: some View {
+        buttonContent
+            .frame(width: Constants.buttonFrame.width, height: Constants.buttonFrame.height)
+            .gesture(buttonGesture)
+    }
+    
+    // MARK: - Private Views
+    private var buttonContent: some View {
+        ZStack {
+            backgroundCircle
+            playSymbol
+        }
+    }
+    
+    private var backgroundCircle: some View {
+        Circle()
+            .fill(Color(red: 59/255, green: 162/255, blue: 57/255)) // #3BA239
+            .frame(width: Constants.Button.size, height: Constants.Button.size)
+            .blur(radius: isPressed ? Constants.Button.blurRadius : 0)
+    }
+    
+    private var playSymbol: some View {
+        PlaySymbol()
+            .fill(Color.white)
+            .frame(width: Constants.Triangle.width, height: Constants.Triangle.height)
+            .offset(x: Constants.Triangle.offset)
+    }
+    
+    // MARK: - Gestures
+    private var buttonGesture: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { _ in
+                isPressed = true
+            }
+            .onEnded { value in
+                defer { isPressed = false }
+                if Constants.buttonFrame.contains(value.location) {
+                    action()
+                }
+            }
+    }
+}
+
+// MARK: - Play Symbol Shape
+private struct PlaySymbol: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
-        
-        // rect를 기준으로 삼각형 그리기
         path.move(to: CGPoint(x: 0, y: 0))
         path.addLine(to: CGPoint(x: 0, y: rect.height))
         path.addLine(to: CGPoint(x: rect.width, y: rect.height/2))
         path.closeSubpath()
-        
         return path
     }
 } 

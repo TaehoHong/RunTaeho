@@ -36,15 +36,8 @@ struct ContentView: View {
                         // UnityContainer 바로 아래에 컨트롤 패널 배치
                         if runningStatus == .Stopped {
                             VStack(spacing: 20) {
-                                // Start 버튼
-                                Button(action: {
+                                StartButton {
                                     runningStatus = .Running
-                                }) {
-                                    Text("Start")
-                                        .padding()
-                                        .background(Color.blue.opacity(0.7))
-                                        .clipShape(Circle())
-                                        .foregroundColor(.white)
                                 }
                             }
                         } else if runningStatus == .Running {
@@ -55,22 +48,20 @@ struct ContentView: View {
                                 .padding(.bottom, 0)
                             }
                         } else if runningStatus == .Paused {
-                            HStack(spacing: 104) {
-                            
-                                StopButtonView()
-                                    .padding(.bottom, 0)
-                                    .onTapGesture {
-                                        runningStatus = .Stopped
-                                    }
-
-                                PlayButton()
+                            GeometryReader { geometry in
+                                // StopButton - 전체 너비의 29.4% 지점에 위치
+                                StopButton { 
+                                    runningStatus = .Stopped
+                                }
                                 .padding(.bottom, 0)
-                                .onTapGesture {
+                                .position(x: geometry.size.width * 0.294, y: geometry.size.height - 56)
+                                
+                                // PlayButton - 전체 너비의 70.8% 지점에 위치
+                                PlayButton {
                                     runningStatus = .Running
                                 }
+                                .position(x: geometry.size.width * 0.708, y: geometry.size.height - 56)
                             }
-
-                            
                         }
                         
                     }
