@@ -28,7 +28,7 @@ struct ContentView: View {
                         .ignoresSafeArea()
                         .frame(width: geometry.size.width, height: geometry.size.height * 0.5, alignment: .top)
 
-                    VelocityDevButtonsView()
+                    VelocityDevButtonView()
 
                     VStack(spacing: 10) {
                         Spacer()
@@ -38,7 +38,7 @@ struct ContentView: View {
                             VStack(spacing: 20) {
                                 // Start 버튼
                                 Button(action: {
-                                    isStarted = true
+                                    runningStatus = .Running
                                 }) {
                                     Text("Start")
                                         .padding()
@@ -53,7 +53,7 @@ struct ContentView: View {
                             StopButtonView()
                                 .padding(.bottom, 0)
                                 .onTapGesture {
-                                    isStarted = false
+                                    runningStatus = .Paused
                                 }
                             }
                         }
