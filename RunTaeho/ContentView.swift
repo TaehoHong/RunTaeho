@@ -47,15 +47,30 @@ struct ContentView: View {
                                         .foregroundColor(.white)
                                 }
                             }
-                        } else {
-                            VStack(spacing: 30) {
-                            
-                            StopButtonView()
-                                .padding(.bottom, 0)
-                                .onTapGesture {
+                        } else if runningStatus == .Running {
+                            VStack {
+                                PauseButton {
                                     runningStatus = .Paused
                                 }
+                                .padding(.bottom, 0)
                             }
+                        } else if runningStatus == .Paused {
+                            HStack(spacing: 104) {
+                            
+                                StopButtonView()
+                                    .padding(.bottom, 0)
+                                    .onTapGesture {
+                                        runningStatus = .Stopped
+                                    }
+
+                                PlayButton()
+                                .padding(.bottom, 0)
+                                .onTapGesture {
+                                    runningStatus = .Running
+                                }
+                            }
+
+                            
                         }
                         
                     }
