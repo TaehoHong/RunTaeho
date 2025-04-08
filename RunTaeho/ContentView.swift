@@ -10,8 +10,9 @@ struct ContentView: View {
     @State private var loading = false
     @State private var showState = false
     @State private var showLayout = false
-    @State private var display = Display.square
     @State private var alignment = Alignment.top
+    
+    @State private var runningStatus: eRunningStatus = .Stopped
 
     @ObservedObject private var unity = Unity.shared
 
@@ -21,87 +22,45 @@ struct ContentView: View {
                 // Unity is starting up or shutting down
                 ProgressView("Loading...").tint(.white).foregroundStyle(.white)
             } else if let UnityContainer = unity.view.flatMap({ UIViewContainer(containee: $0) }) {
-                // Unity is running
-                switch display {
-                case .fullscreen:
-                    UnityContainer.ignoresSafeArea()
-                case .safearea:
+                GeometryReader { geometry in
+                    
                     UnityContainer
-                case .aspect, .square:
-                    let isAspect = display == .aspect
-                    GeometryReader(content: { geometry in
-                        let aspect = geometry.size.applying(CGAffineTransform(scaleX: 0.5, y: 0.5))
-                        let square = min(aspect.width, aspect.height)
-                        let width = isAspect ? aspect.width : square
-                        let height = isAspect ? aspect.height : square
-                        UnityContainer.frame(width: width, height: height).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
-                    })
-                }
-                VStack(alignment: .leading, content: {
-                    if showState || showLayout {
-                        VStack(content: {
-                            if showState {
-                                HStack(content: {
-                                    Text(String(format: "Scale %.2f", unity.scale))
-                                    Slider(value: $unity.scale, in: 1...3)
-                                })
-                                Picker("Texture", selection: $unity.texture, content: {
-                                    Text("Default").tag(Unity.Texture.none)
-                                    Text("Marble").tag(Unity.Texture.marble)
-                                    Text("Checkerboard").tag(Unity.Texture.checkerboard)
-                                })
-                                Picker("Spotlight", selection: $unity.spotlight, content: {
-                                    Text("Neutral").tag(Unity.LightTemperature.neutral)
-                                    Text("Warm").tag(Unity.LightTemperature.warm)
-                                    Text("Cool").tag(Unity.LightTemperature.cool)
-                                })
-                                Picker("Visible", selection: $unity.visible, content: {
-                                    Text("Show").tag(true)
-                                    Text("Hide").tag(false)
-                                })
-                            }
-                            if showLayout {
-                                Picker("Display", selection: $display, content: {
-                                    Text("Square").tag(Display.square)
-                                    Text("Aspect").tag(Display.aspect)
-                                    Text("Safe area").tag(Display.safearea)
-                                    Text("Fullscreen").tag(Display.fullscreen)
-                                })
-                                if display == .aspect || display == .square {
-                                    Picker("Alignment", selection: $alignment, content: {
-                                        Text("Top").tag(Alignment.top)
-                                        Text("Center").tag(Alignment.center)
-                                        Text("Bottom").tag(Alignment.bottom)
-                                    })
+                        .ignoresSafeArea()
+                        .frame(width: geometry.size.width, height: geometry.size.height * 0.5, alignment: .top)
+
+                    VelocityDevButtonsView()
+
+                    VStack(spacing: 10) {
+                        Spacer()
+                        
+                        // UnityContainer 바로 아래에 컨트롤 패널 배치
+                        if runningStatus == .Stopped {
+                            VStack(spacing: 20) {
+                                // Start 버튼
+                                Button(action: {
+                                    isStarted = true
+                                }) {
+                                    Text("Start")
+                                        .padding()
+                                        .background(Color.blue.opacity(0.7))
+                                        .clipShape(Circle())
+                                        .foregroundColor(.white)
                                 }
                             }
-                        }).padding().background(CustomButtonStyle.color).clipShape(CustomButtonStyle.shape)
+                        } else {
+                            VStack(spacing: 30) {
+                            
+                            StopButtonView()
+                                .padding(.bottom, 0)
+                                .onTapGesture {
+                                    isStarted = false
+                                }
+                            }
+                        }
+                        
                     }
-                    HStack(content: {
-                        let stateImage = "cube" + (showState ? ".fill" : "")
-                        let layoutImage = "aspectratio" + (showLayout ? ".fill" : "")
-//                        Button("Go", systemImage: stateImage, action: {
-//                            
-//                        })
-                        Button("State", systemImage: stateImage, action: {
-                            showState.toggle()
-                            showLayout = false
-                        })
-                        Button("Layout", systemImage: layoutImage, action: {
-                            showLayout.toggle()
-                            showState = false
-                        })
-                        Button("Stop Unity", systemImage: "stop", action: {
-                            showLayout = false
-                            showState = false
-                            loading = true
-                            DispatchQueue.main.async(execute: {
-                                unity.stop()
-                                loading = false
-                            })
-                        })
-                    })
-                })
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             } else {
                 // Unity is not running
                 Text("Starting Unity...")
@@ -117,24 +76,12 @@ struct ContentView: View {
                         })
                     }
             }
-        }).safeAreaPadding().pickerStyle(.segmented).buttonStyle(CustomButtonStyle())
+        })
+        .safeAreaPadding()
+        .pickerStyle(.segmented)
     }
 }
 
-fileprivate enum Display {
-    case square
-    case aspect
-    case safearea
-    case fullscreen
-}
-
-fileprivate struct CustomButtonStyle: PrimitiveButtonStyle {
-    static let color = Color(.darkGray)
-    static let shape = RoundedRectangle(cornerRadius: 6)
-    func makeBody(configuration: Configuration) -> some View {
-        BorderedProminentButtonStyle().makeBody(configuration: configuration).tint(CustomButtonStyle.color).clipShape(CustomButtonStyle.shape)
-    }
-}
 
 /* Make alignment hashable so it can be used as a
    picker selection. We only care about top, center,
@@ -155,3 +102,5 @@ extension Alignment: @retroactive Hashable {
 #Preview {
     ContentView()
 }
+
+

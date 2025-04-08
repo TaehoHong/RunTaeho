@@ -55,6 +55,15 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "F784D0C92D55FC9E002E4A85"
+            BuildableName = "RunTaeho.app"
+            BlueprintName = "RunTaeho"
+            ReferencedContainer = "container:RunTaeho.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

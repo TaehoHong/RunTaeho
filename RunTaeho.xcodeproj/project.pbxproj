@@ -7,8 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		F784D2272D5B27D3002E4A85 /* UnityFramework.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F784D2262D5B27D3002E4A85 /* UnityFramework.framework */; };
-		F784D2282D5B27D3002E4A85 /* UnityFramework.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F784D2262D5B27D3002E4A85 /* UnityFramework.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		F701CB3D2D82CCC4000F54FB /* UnityFramework.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F701CB3B2D82CCC4000F54FB /* UnityFramework.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -29,13 +28,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		F784D1272D560066002E4A85 /* Embed Frameworks */ = {
+		F701CB0C2D82C462000F54FB /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				F784D2282D5B27D3002E4A85 /* UnityFramework.framework in Embed Frameworks */,
+				F701CB3D2D82CCC4000F54FB /* UnityFramework.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -43,15 +42,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F701CB3B2D82CCC4000F54FB /* UnityFramework.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = UnityFramework.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F784D0CA2D55FC9E002E4A85 /* RunTaeho.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RunTaeho.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F784D0DA2D55FC9F002E4A85 /* RunTaehoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunTaehoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F784D0E42D55FC9F002E4A85 /* RunTaehoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunTaehoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		F784D2262D5B27D3002E4A85 /* UnityFramework.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = UnityFramework.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		F7A12A022D56213E006C3170 /* ApplePrivacyManifestsMerge.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = ApplePrivacyManifestsMerge.txt; sourceTree = "<group>"; };
-		F7A12A032D56213E006C3170 /* AppleRequiredReasonCSharpAPIs.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = AppleRequiredReasonCSharpAPIs.txt; sourceTree = "<group>"; };
-		F7A12A042D56213E006C3170 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		F7A12A052D56213E006C3170 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		F7A12A062D56213E006C3170 /* UnityFramework.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UnityFramework.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -77,7 +71,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F784D2272D5B27D3002E4A85 /* UnityFramework.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -98,13 +91,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		F701CB3A2D82CCC4000F54FB /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F701CB3B2D82CCC4000F54FB /* UnityFramework.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		F784D0C12D55FC9E002E4A85 = {
 			isa = PBXGroup;
 			children = (
 				F784D0CC2D55FC9E002E4A85 /* RunTaeho */,
 				F784D0DD2D55FC9F002E4A85 /* RunTaehoTests */,
 				F784D0E72D55FC9F002E4A85 /* RunTaehoUITests */,
-				F784D1242D560066002E4A85 /* Frameworks */,
+				F701CB3A2D82CCC4000F54FB /* Frameworks */,
 				F784D0CB2D55FC9E002E4A85 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -119,28 +120,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		F784D1242D560066002E4A85 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				F784D2262D5B27D3002E4A85 /* UnityFramework.framework */,
-				F7A12A072D56213E006C3170 /* UnityFramework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		F7A12A072D56213E006C3170 /* UnityFramework */ = {
-			isa = PBXGroup;
-			children = (
-				F7A12A022D56213E006C3170 /* ApplePrivacyManifestsMerge.txt */,
-				F7A12A032D56213E006C3170 /* AppleRequiredReasonCSharpAPIs.txt */,
-				F7A12A042D56213E006C3170 /* Info.plist */,
-				F7A12A052D56213E006C3170 /* PrivacyInfo.xcprivacy */,
-				F7A12A062D56213E006C3170 /* UnityFramework.h */,
-			);
-			name = UnityFramework;
-			path = ../../unity/ios/UnityFramework;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -151,7 +130,7 @@
 				F784D0C62D55FC9E002E4A85 /* Sources */,
 				F784D0C72D55FC9E002E4A85 /* Frameworks */,
 				F784D0C82D55FC9E002E4A85 /* Resources */,
-				F784D1272D560066002E4A85 /* Embed Frameworks */,
+				F701CB0C2D82C462000F54FB /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -452,8 +431,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -482,8 +460,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
