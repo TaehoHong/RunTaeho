@@ -38,14 +38,43 @@ struct ContentView: View {
                             VStack(spacing: 20) {
                                 StartButton {
                                     runningStatus = .Running
+
+                                    for family: String in UIFont.familyNames {
+                                    print(family)
+                                    for names : String in UIFont.fontNames(forFamilyName: family){
+                                        print("=== \(names)")
+                                    }
                                 }
+                                }
+
+                                
                             }
                         } else if runningStatus == .Running {
-                            VStack {
-                                PauseButton {
-                                    runningStatus = .Paused
+                            GeometryReader { geometry in
+                                VStack(spacing: 25) {
+                                    // 상단 Stats: BPM, 페이스, 시간
+                                    HStack(spacing: 20) {
+                                        BPMView(bpm: 0)
+                                            // .position(x: geometry.size.width * 0.25, y: 40)
+                                        PaceView(minutes: 0, seconds: 0)
+                                            // .position(x: geometry.size.width * 0.5, y: 40)
+                                        TimeView(minutes: 0, seconds: 0)
+                                            // .position(x: geometry.size.width * 0.75, y: 40)
+                                    }
+                                    
+                                    // 중앙 거리
+                                    DistanceView(distance: 0.00)
+                                    
+                                    Spacer()
+                                    
+                                    // 하단 일시정지 버튼
+                                    PauseButton {
+                                        runningStatus = .Paused
+                                    }
+                                    .padding(.bottom, 0)
                                 }
-                                .padding(.bottom, 0)
+                                .frame(width: geometry.size.width, height: geometry.size.height * 0.5)
+                                .position(x: geometry.size.width / 2, y: geometry.size.height * 0.75)
                             }
                         } else if runningStatus == .Paused {
                             GeometryReader { geometry in

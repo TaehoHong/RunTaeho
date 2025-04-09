@@ -71,29 +71,25 @@ struct StopButton: View {
                     withAnimation(.linear(duration: Constants.Button.minPressDuration)) {
                         scaleEffect = Constants.Button.maxScaleEffect
                     }
-                }
-            }
-            .onEnded { value in
-
-                defer {
-                    isPressed = false
-                    pressStartTime = nil
                     
-                    // 크기 원복
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        scaleEffect = 1.0
+                    // 2초 후에 action 실행
+                    DispatchQueue.main.asyncAfter(deadline: .now() + Constants.Button.minPressDuration) {
+                        if isPressed {
+                            action()
+                        }
                     }
                 }
-                // 2초 이상 눌렀는지 확인
-                guard let startTime = pressStartTime,
-                      Date().timeIntervalSince(startTime) >= Constants.Button.minPressDuration else {
-                    return
-                }
+            }
+            .onEnded { _ in
+                isPressed = false
+                pressStartTime = nil
                 
-                // 터치가 버튼 영역 내에서 끝났는지 확인
-                if Constants.buttonFrame.contains(value.location) {
-                    action()
+                // 크기 원복
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    scaleEffect = 1.0
                 }
             }
     }
 }
+
+

@@ -48,9 +48,22 @@
 		F784D0E42D55FC9F002E4A85 /* RunTaehoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunTaehoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F7861AD22DA61D030086BA2E /* Exceptions for "RunTaeho" folder in "RunTaeho" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F784D0C92D55FC9E002E4A85 /* RunTaeho */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F784D0CC2D55FC9E002E4A85 /* RunTaeho */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F7861AD22DA61D030086BA2E /* Exceptions for "RunTaeho" folder in "RunTaeho" target */,
+			);
 			path = RunTaeho;
 			sourceTree = "<group>";
 		};
@@ -428,6 +441,7 @@
 				DEVELOPMENT_TEAM = Y9XN2ZQ9G3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RunTaeho/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -457,6 +471,7 @@
 				DEVELOPMENT_TEAM = Y9XN2ZQ9G3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RunTaeho/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
