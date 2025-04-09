@@ -7,89 +7,83 @@ struct ContentView: View {
     @State private var alignment = Alignment.top
     
     @State private var runningStatus: eRunningStatus = .Stopped
-
+    
     @ObservedObject private var unity = Unity.shared
-
+    
     var body: some View {
-        ZStack(alignment: .bottomLeading, content: {
+        ZStack(alignment: .bottomLeading) {
             if loading {
                 // Unity is starting up or shutting down
-                ProgressView("Loading...").tint(.white).foregroundStyle(.white)
-            } else if let UnityContainer = unity.view.flatMap({ UIViewContainer(containee: $0) }) {
+                ProgressView("Loading...")
+                    .tint(.white)
+                    .foregroundStyle(.white)
+            } else if let unityContainer = unity.view.flatMap({ UIViewContainer(containee: $0) }) {
                 GeometryReader { geometry in
+                    let width = geometry.size.width
+                    let height = geometry.size.height
                     
-                    UnityContainer
+                    // UnityContainer occupies the top half of the screen
+                    unityContainer
                         .ignoresSafeArea()
-                        .frame(width: geometry.size.width, height: geometry.size.height * 0.5, alignment: .top)
-
+                        .frame(width: width, height: height * 0.5, alignment: .top)
+                    
                     VelocityDevButtonView()
                     
-
                     VStack(spacing: 10) {
                         Spacer()
                         
-                        // UnityContainer 바로 아래에 컨트롤 패널 배치
+                        // Control panel placed below UnityContainer
                         if runningStatus == .Stopped {
                             VStack(spacing: 20) {
                                 StartButton {
                                     runningStatus = .Running
-                                }                                
+                                }
                             }
                         } else {
-                            GeometryReader { geometry in
-                                VStack(spacing: 25) {
-                                    // 상단 Stats: BPM, 페이스, 시간
-                                    StatsView()
-                                    
-                                    if runningStatus == .Running {
-                                        // 하단 일시정지 버튼
-                                        PauseButton {
-                                            runningStatus = .Paused
-                                        }
-                                        .padding(.bottom, 0)
-                                    } else if runningStatus == .Paused {
-                                        HStack(spacing: 40) {
-                                            Spacer()
-                                            StopButton { runningStatus = .Stopped }
-                                            Spacer()
-                                            PlayButton { runningStatus = .Running }
-                                            Spacer()
-                                        }
+                            VStack(spacing: 25) {
+                                // Top stats (BPM, Pace, Time) with centered Distance
+                                StatsView()
+                                
+                                if runningStatus == .Running {
+                                    PauseButton {
+                                        runningStatus = .Paused
                                     }
-
+                                    .padding(.bottom, 0)
+                                } else if runningStatus == .Paused {
+                                    HStack(spacing: 40) {
+                                        Spacer()
+                                        StopButton { runningStatus = .Stopped }
+                                        Spacer()
+                                        PlayButton { runningStatus = .Running }
+                                        Spacer()
+                                    }
                                 }
-                                // .border(Color.black, width: 1)
-                                .frame(width: geometry.size.width, height: geometry.size.height * 0.5)
-                                .position(x: geometry.size.width / 2, y: geometry.size.height * 0.75)
                             }
+                            .frame(width: width, height: height * 0.5)
+                            .position(x: width / 2, y: height * 0.75)
                         }
                     }
-                    // .border(Color.blue, width: 1)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             } else {
-                // Unity is not running
-                Text("Starting Unity...")
-                ProgressView()
-                    .onAppear {
-                        /* Unity startup is slow and must must occur on the
-                           main thread. Use async dispatch so we can re-render
-                           with a ProgressView before the UI becomes unresponsive. */
-                        loading = true
-                        DispatchQueue.main.async(execute: {
-                            unity.start()
-                            loading = false
-                        })
-                    }
+                VStack {
+                    Text("Starting Unity...")
+                    ProgressView()
+                        .onAppear {
+                            loading = true
+                            DispatchQueue.main.async {
+                                unity.start()
+                                loading = false
+                            }
+                        }
+                }
             }
-        })
-        // .border(Color.red, width: 1)
+        }
         .background(Color.white)
         .safeAreaPadding()
         .pickerStyle(.segmented)
     }
 }
-
 
 /* Make alignment hashable so it can be used as a
    picker selection. We only care about top, center,
@@ -103,22 +97,5 @@ extension Alignment: @retroactive Hashable {
         case .bottom: hasher.combine(2)
         default: hasher.combine(3)
         }
-    }
-}
-
-
-struct StatsView: View {
-    var body: some View {
-        HStack(spacing: 20) {
-            BPMView(bpm: 0)
-            PaceView(minutes: 0, seconds: 0)
-            TimeView(minutes: 0, seconds: 0)
-        }.padding(.top, 20)
-        
-        Spacer()
-        // 중앙 거리
-        DistanceView(distance: 0.00)
-        
-        Spacer()
     }
 }
