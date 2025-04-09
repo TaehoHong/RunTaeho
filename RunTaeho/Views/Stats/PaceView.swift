@@ -18,9 +18,9 @@ struct PaceView: View {
     var body: some View {
         VStack(spacing: 0) {
             Text("페이스")
-                .font(RunTaehoFont.stats)
+                .font(CustomFont.stats())
             Text(paceText)
-                .font(RunTaehoFont.stats)
+                .font(CustomFont.stats())
         }
         .frame(width: 105, height: 45)
         .foregroundColor(.black)

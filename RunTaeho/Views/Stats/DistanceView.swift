@@ -16,7 +16,7 @@ struct DistanceView: View {
     
     var body: some View {
         Text(distanceText)
-            .font(RunTaehoFont.distance)
+            .font(CustomFont.distance())
             .frame(width: 194, height: 57)
             .foregroundColor(.black)
             .multilineTextAlignment(.center)

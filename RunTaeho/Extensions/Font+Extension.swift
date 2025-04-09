@@ -7,9 +7,18 @@
 
 import SwiftUI
 
-struct RunTaehoFont {
-    private static let fontName = "BMJUAOTF"
+struct CustomFont {
+    private static let bmJUA = "BMJUAOTF"
     
-    static let stats = Font.custom(fontName, size: 25)
-    static let distance = Font.custom(fontName, size: 40)
+    static func stats(size: CGFloat = 25) -> Font {
+        Font.custom(bmJUA, size: size)
+    }
+    
+    static func distance(size: CGFloat = 60) -> Font {
+        Font.custom(bmJUA, size: size)
+    }
+    
+    static func custom(size: CGFloat) -> Font {
+        Font.custom(bmJUA, size: size)
+    }
 } 

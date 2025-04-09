@@ -18,9 +18,9 @@ struct TimeView: View {
     var body: some View {
         VStack(spacing: 0) {
             Text("시간")
-                .font(RunTaehoFont.stats)
+                .font(CustomFont.stats())
             Text(timeText)
-                .font(RunTaehoFont.stats)
+                .font(CustomFont.stats())
         }
         .frame(width: 105, height: 52)
         .foregroundColor(.black)

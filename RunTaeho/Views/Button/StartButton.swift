@@ -47,7 +47,7 @@ struct StartButton: View {
     
     private var startText: some View {
         Text("Start")
-            .font(.system(size: 40, weight: .bold))
+            .font(CustomFont.custom(size: 40))
             .foregroundColor(.white)
     }
     

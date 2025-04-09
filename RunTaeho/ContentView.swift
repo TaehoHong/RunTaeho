@@ -1,9 +1,3 @@
-//  ContentView.swift
-//  UnitySwiftUI
-//
-//  Created by Benjamin Dewey on 12/24/23.
-//
-
 import SwiftUI
 
 struct ContentView: View {
@@ -29,6 +23,7 @@ struct ContentView: View {
                         .frame(width: geometry.size.width, height: geometry.size.height * 0.5, alignment: .top)
 
                     VelocityDevButtonView()
+                    
 
                     VStack(spacing: 10) {
                         Spacer()
@@ -38,62 +33,38 @@ struct ContentView: View {
                             VStack(spacing: 20) {
                                 StartButton {
                                     runningStatus = .Running
-
-                                    for family: String in UIFont.familyNames {
-                                    print(family)
-                                    for names : String in UIFont.fontNames(forFamilyName: family){
-                                        print("=== \(names)")
-                                    }
-                                }
-                                }
-
-                                
+                                }                                
                             }
-                        } else if runningStatus == .Running {
+                        } else {
                             GeometryReader { geometry in
                                 VStack(spacing: 25) {
                                     // 상단 Stats: BPM, 페이스, 시간
-                                    HStack(spacing: 20) {
-                                        BPMView(bpm: 0)
-                                            // .position(x: geometry.size.width * 0.25, y: 40)
-                                        PaceView(minutes: 0, seconds: 0)
-                                            // .position(x: geometry.size.width * 0.5, y: 40)
-                                        TimeView(minutes: 0, seconds: 0)
-                                            // .position(x: geometry.size.width * 0.75, y: 40)
+                                    StatsView()
+                                    
+                                    if runningStatus == .Running {
+                                        // 하단 일시정지 버튼
+                                        PauseButton {
+                                            runningStatus = .Paused
+                                        }
+                                        .padding(.bottom, 0)
+                                    } else if runningStatus == .Paused {
+                                        HStack(spacing: 40) {
+                                            Spacer()
+                                            StopButton { runningStatus = .Stopped }
+                                            Spacer()
+                                            PlayButton { runningStatus = .Running }
+                                            Spacer()
+                                        }
                                     }
-                                    
-                                    // 중앙 거리
-                                    DistanceView(distance: 0.00)
-                                    
-                                    Spacer()
-                                    
-                                    // 하단 일시정지 버튼
-                                    PauseButton {
-                                        runningStatus = .Paused
-                                    }
-                                    .padding(.bottom, 0)
+
                                 }
+                                // .border(Color.black, width: 1)
                                 .frame(width: geometry.size.width, height: geometry.size.height * 0.5)
                                 .position(x: geometry.size.width / 2, y: geometry.size.height * 0.75)
                             }
-                        } else if runningStatus == .Paused {
-                            GeometryReader { geometry in
-                                // StopButton - 전체 너비의 29.4% 지점에 위치
-                                StopButton { 
-                                    runningStatus = .Stopped
-                                }
-                                .padding(.bottom, 0)
-                                .position(x: geometry.size.width * 0.294, y: geometry.size.height - 56)
-                                
-                                // PlayButton - 전체 너비의 70.8% 지점에 위치
-                                PlayButton {
-                                    runningStatus = .Running
-                                }
-                                .position(x: geometry.size.width * 0.708, y: geometry.size.height - 56)
-                            }
                         }
-                        
                     }
+                    // .border(Color.blue, width: 1)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             } else {
@@ -112,6 +83,8 @@ struct ContentView: View {
                     }
             }
         })
+        // .border(Color.red, width: 1)
+        .background(Color.white)
         .safeAreaPadding()
         .pickerStyle(.segmented)
     }
@@ -134,8 +107,18 @@ extension Alignment: @retroactive Hashable {
 }
 
 
-#Preview {
-    ContentView()
+struct StatsView: View {
+    var body: some View {
+        HStack(spacing: 20) {
+            BPMView(bpm: 0)
+            PaceView(minutes: 0, seconds: 0)
+            TimeView(minutes: 0, seconds: 0)
+        }.padding(.top, 20)
+        
+        Spacer()
+        // 중앙 거리
+        DistanceView(distance: 0.00)
+        
+        Spacer()
+    }
 }
-
-

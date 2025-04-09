@@ -17,9 +17,9 @@ struct BPMView: View {
     var body: some View {
         VStack(spacing: 0) {
             Text("BPM")
-                .font(RunTaehoFont.stats)
+                .font(CustomFont.stats())
             Text(bpmText)
-                .font(RunTaehoFont.stats)
+                .font(CustomFont.stats())
         }
         .frame(width: 105, height: 45)
         .foregroundColor(.black)
