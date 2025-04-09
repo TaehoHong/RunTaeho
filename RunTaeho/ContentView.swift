@@ -6,8 +6,7 @@ struct ContentView: View {
     @State private var showLayout = false
     @State private var alignment = Alignment.top
     
-    @State private var runningStatus: eRunningStatus = .Stopped
-    
+    @StateObject private var viewModel = RunningViewModel()
     @ObservedObject private var unity = Unity.shared
     
     var body: some View {
@@ -33,28 +32,32 @@ struct ContentView: View {
                         Spacer()
                         
                         // Control panel placed below UnityContainer
-                        if runningStatus == .Stopped {
+                        if viewModel.runningStatus == .Stopped {
                             VStack(spacing: 20) {
                                 StartButton {
-                                    runningStatus = .Running
+                                    viewModel.startRunning()
                                 }
                             }
                         } else {
                             VStack(spacing: 25) {
                                 // Top stats (BPM, Pace, Time) with centered Distance
-                                StatsView()
+                                StatsView(viewModel: viewModel)
                                 
-                                if runningStatus == .Running {
+                                if viewModel.runningStatus == .Running {
                                     PauseButton {
-                                        runningStatus = .Paused
+                                        viewModel.pauseRunning()
                                     }
                                     .padding(.bottom, 0)
-                                } else if runningStatus == .Paused {
+                                } else if viewModel.runningStatus == .Paused {
                                     HStack(spacing: 40) {
                                         Spacer()
-                                        StopButton { runningStatus = .Stopped }
+                                        StopButton { 
+                                            viewModel.stopRunning()
+                                        }
                                         Spacer()
-                                        PlayButton { runningStatus = .Running }
+                                        PlayButton { 
+                                            viewModel.resumeRunning()
+                                        }
                                         Spacer()
                                     }
                                 }

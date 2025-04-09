@@ -8,11 +8,16 @@
 import SwiftUI
 
 struct TimeView: View {
+    let hours: Int
     let minutes: Int
     let seconds: Int
     
     private var timeText: String {
-        String(format: "%02d:%02d", minutes, seconds)
+        if hours > 0 {
+            return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            return String(format: "%02d:%02d", minutes, seconds)
+        }
     }
     
     var body: some View {
@@ -26,5 +31,9 @@ struct TimeView: View {
         .foregroundColor(.black)
         .multilineTextAlignment(.center)
     }
+}
+
+#Preview {
+    TimeView(hours: 1, minutes: 23, seconds: 45)
 }
 
