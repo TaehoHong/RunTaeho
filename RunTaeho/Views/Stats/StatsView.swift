@@ -6,8 +6,8 @@ struct StatsView: View {
     var body: some View {
         VStack(spacing: 20) {
             HStack(spacing: 20) {
-                BPMView(bpm: viewModel.bpm)
-                PaceView(minutes: viewModel.pace.minutes, seconds: viewModel.pace.seconds)
+                BPMView(bpm: viewModel.statsManager.bpm)
+                PaceView(minutes: viewModel.statsManager.pace.minutes, seconds: viewModel.statsManager.pace.seconds)
                 TimeView(
                     hours: viewModel.elapsedTime.hours,
                     minutes: viewModel.elapsedTime.minutes,

@@ -125,7 +125,7 @@ struct DebugView: View {
                 debugLocationStatus(viewModel: viewModel)
                 debugGPSAccuracy(viewModel: viewModel)
                 debugDistanceInfo(viewModel: viewModel)
-                debugLastLocationUpdate(viewModel: viewModel)
+//                debugLastLocationUpdate(viewModel: viewModel)
                 
                 Button(action: {
                     viewModel.printDebugStatus()
@@ -193,18 +193,18 @@ private func debugDistanceInfo(viewModel: RunningViewModel) -> some View {
     VStack(alignment: .leading, spacing: 5) {
         Text("거리 정보:")
         Text("총 거리: \(String(format: "%.2fm", viewModel.distanceMeter))")
-        Text("현재 페이스: \(viewModel.pace.minutes)'\(String(format: "%02d", viewModel.pace.seconds))\"")
+        Text("현재 페이스: \(viewModel.statsManager.pace.minutes)'\(String(format: "%02d", viewModel.statsManager.pace.seconds))\"")
     }
     .padding(.leading)
     .font(.subheadline)
 }
 
-private func debugLastLocationUpdate(viewModel: RunningViewModel) -> some View {
-    VStack(alignment: .leading, spacing: 5) {
-        Text("마지막 위치 업데이트:")
-        Text(viewModel.lastLocationUpdate)
-            .font(.caption)
-            .foregroundColor(.gray)
-    }
-    .font(.subheadline)
-}
+//private func debugLastLocationUpdate(viewModel: RunningViewModel) -> some View {
+//    VStack(alignment: .leading, spacing: 5) {
+//        Text("마지막 위치 업데이트:")
+//        Text(viewModel.locationManager.lastLocationUpdate)
+//            .font(.caption)
+//            .foregroundColor(.gray)
+//    }
+//    .font(.subheadline)
+//}
