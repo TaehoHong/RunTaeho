@@ -65,7 +65,3 @@ struct StartButton: View {
             }
     }
 }
-
-#Preview {
-    StartButton(action: {})
-} 

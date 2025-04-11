@@ -8,12 +8,12 @@
 import SwiftUI
 
 @main
-struct UnitySwiftUIApp: App {
+struct RunTaehoApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack(content: {
                 Color.gray.ignoresSafeArea()
-                ContentView()
+                LoginView()
             })
         }
     }
