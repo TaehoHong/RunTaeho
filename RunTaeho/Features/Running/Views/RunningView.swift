@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ContentView: View {
+struct RunningView: View {
     @State private var loading = false
     @State private var showState = false
     @State private var showLayout = false

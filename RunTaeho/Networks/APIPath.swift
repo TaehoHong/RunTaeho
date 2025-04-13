@@ -1,0 +1,1 @@
+let GOOGLE_OAUTH_PATH = "/api/v1/oauth/google"
