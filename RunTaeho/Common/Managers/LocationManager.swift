@@ -3,7 +3,9 @@ import CoreLocation
 class LocationManager: NSObject, CLLocationManagerDelegate {
     private var locationManager: CLLocationManager?
     private var previousLocation: CLLocation?
+    public var isRecived: Bool = false
     @Published var distanceMeter: Double = 0.0
+    @Published var distanceDelta: Double = 0.0
     @Published var locationAuthStatus: String = "권한 상태 확인 전"
     @Published var locationAccuracy: Double = 0.0
     
@@ -37,6 +39,8 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         if let previousLocation = previousLocation {
             let distance = location.distance(from: previousLocation)
             distanceMeter += distance
+            distanceDelta = distance
+            isRecived = true
         }
         
         previousLocation = location

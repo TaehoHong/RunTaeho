@@ -1,23 +1,33 @@
 import SwiftUI
+import GoogleSignIn
+import GoogleSignInSwift
 
 struct LoginView: View {
-    @State private var isShowingContentView = false
-
+    @StateObject private var viewModel = LoginViewModel()
+    
     var body: some View {
         GeometryReader { geometry in
             VStack(spacing: 10) {
+                GoogleSignInButton(
+                    scheme: .light,
+                    style: .wide,
+                    action: {
+                        viewModel.signIn()
+                    })
+                    .frame(width: 240, height: 38, alignment: .center)
+                
+                // Button(action: {
+                //     viewModel.signIn()
+                //     isShowingContentView = true
+                // }) {
+                //     Image("ios_neutral_sq_SI")
+                //         .resizable()
+                //         .scaledToFit()
+                //         .frame(width: 240, height: 38)
+                // }
 
                 Button(action: {
-                    isShowingContentView = true
-                }) {
-                    Image("ios_neutral_sq_SI")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 240, height: 38)
-                }
-
-                Button(action: {
-                    isShowingContentView = true
+                    // Apple 로그인 로직
                 }) {
                     Image("appleid_button")
                         .resizable()
@@ -27,8 +37,11 @@ struct LoginView: View {
             }
             .frame(width: geometry.size.width, height: geometry.size.height * 0.5)
             .position(x: geometry.size.width / 2, y: geometry.size.height * 0.75)
-            .fullScreenCover(isPresented: $isShowingContentView) {
+            .fullScreenCover(isPresented: $viewModel.isLoggedIn) {
                 RunningView()
+            }
+            .alert("로그인 실패", isPresented: $viewModel.showError) {
+                Button("확인", role: .cancel) { }
             }
             .navigationTitle("로그인")
         }   

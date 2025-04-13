@@ -7,6 +7,7 @@ class RunningViewModel: ObservableObject {
     @Published private(set) var runningStatus: eRunningStatus = .Stopped
     @Published private(set) var distanceMeter: Double = 0.0
     @Published private(set) var elapsedTime: (hours: Int, minutes: Int, seconds: Int) = (0, 0, 0)
+    private var previousElapedSeconds: Int = 0
     private let timeManager = TimeManager()
     private let locationManager = LocationManager()
     public let statsManager = StatsManager()
@@ -48,8 +49,14 @@ class RunningViewModel: ObservableObject {
     private func updateStats() {
         if runningStatus == .Running {
             distanceMeter = locationManager.distanceMeter
-            elapsedTime = timeManager.elapsedTime
-            statsManager.updateStats(distance: distanceMeter, elapsedSeconds: timeManager.elapsedSeconds)
+            elapsedTime  = timeManager.elapsedTime
+            
+            if locationManager.isRecived {
+                let durationSeconds = timeManager.elapsedSeconds - previousElapedSeconds
+                statsManager.updateStats(distance: locationManager.distanceDelta, elapsedSeconds: durationSeconds)
+                previousElapedSeconds = timeManager.elapsedSeconds
+                locationManager.isRecived = false
+            }
         }
     }
 }
