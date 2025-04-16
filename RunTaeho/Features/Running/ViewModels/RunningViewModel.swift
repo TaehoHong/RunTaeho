@@ -11,9 +11,11 @@ class RunningViewModel: ObservableObject {
     private let timeManager = TimeManager()
     private let locationManager = LocationManager()
     public let statsManager = StatsManager()
+    private let charactorMoveMentService: CharactorMoveMentService
     private var cancellables = Set<AnyCancellable>()
     
     init() {
+        charactorMoveMentService = CharactorMoveMentService.shared
         timeManager.$elapsedSeconds
             .sink { [weak self] _ in
                 self?.updateStats()
@@ -33,6 +35,7 @@ class RunningViewModel: ObservableObject {
     func pauseRunning() {
         runningStatus = .Paused
         timeManager.pause()
+        charactorMoveMentService.stopCharactor()
     }
     
     func resumeRunning() {
@@ -59,19 +62,7 @@ class RunningViewModel: ObservableObject {
 
                 
                 if locationManager.distanceDelta > 0 {
-                    let adjustedSpeed: Double
-                    if statsManager.speed >= 17 {
-                        adjustedSpeed = 7
-                    } else if statsManager.speed <= 7 {
-                        adjustedSpeed = 3
-                    } else {
-                        let speedDifference = statsManager.speed - 7
-                        let speedAdjustment = Double(speedDifference) * 0.4
-                        adjustedSpeed = 3 + speedAdjustment
-                    }
-                    print("speed: \(statsManager.speed)")
-                    print("adjustedSpeed: \(adjustedSpeed)")
-                    Unity.shared.sendMessage("Charactor", methodName: "SetSpeed", parameter: String(adjustedSpeed))
+                    charactorMoveMentService.moveCharactor(speed: statsManager.speed)
                 }
             }
         }
