@@ -1,4 +1,4 @@
 protocol AuthenticationProtocol {
-    func signIn() async throws -> UserData
+    func signIn() async throws -> UserAuthData
     func signOut() throws
 }

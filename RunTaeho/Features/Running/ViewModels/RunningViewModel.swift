@@ -56,6 +56,23 @@ class RunningViewModel: ObservableObject {
                 statsManager.updateStats(distance: locationManager.distanceDelta, elapsedSeconds: durationSeconds)
                 previousElapedSeconds = timeManager.elapsedSeconds
                 locationManager.isRecived = false
+
+                
+                if locationManager.distanceDelta > 0 {
+                    let adjustedSpeed: Double
+                    if statsManager.speed >= 17 {
+                        adjustedSpeed = 7
+                    } else if statsManager.speed <= 7 {
+                        adjustedSpeed = 3
+                    } else {
+                        let speedDifference = statsManager.speed - 7
+                        let speedAdjustment = Double(speedDifference) * 0.4
+                        adjustedSpeed = 3 + speedAdjustment
+                    }
+                    print("speed: \(statsManager.speed)")
+                    print("adjustedSpeed: \(adjustedSpeed)")
+                    Unity.shared.sendMessage("Charactor", methodName: "SetSpeed", parameter: String(adjustedSpeed))
+                }
             }
         }
     }

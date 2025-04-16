@@ -3,7 +3,7 @@ import SwiftUI
 @MainActor
 class LoginViewModel: ObservableObject {
     @Published public var isLoggedIn = false
-    @Published private(set) var userData: UserData?
+    @Published public var userAuthData: UserAuthData?
     @Published var showError = false
     
     private let authService: AuthenticationProtocol
@@ -15,7 +15,7 @@ class LoginViewModel: ObservableObject {
     func signIn() {
         Task {
             do {
-                userData = try await authService.signIn()
+                userAuthData = try await authService.signIn()
                 isLoggedIn = true
             } catch {
                 showError = true

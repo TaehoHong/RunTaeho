@@ -1,5 +1,4 @@
 import SwiftUI
-import GoogleSignIn
 import GoogleSignInSwift
 
 struct LoginView: View {
@@ -14,18 +13,8 @@ struct LoginView: View {
                     action: {
                         viewModel.signIn()
                     })
-                    .frame(width: 240, height: 38, alignment: .center)
+                .frame(width: 240, height: 38, alignment: .center)
                 
-                // Button(action: {
-                //     viewModel.signIn()
-                //     isShowingContentView = true
-                // }) {
-                //     Image("ios_neutral_sq_SI")
-                //         .resizable()
-                //         .scaledToFit()
-                //         .frame(width: 240, height: 38)
-                // }
-
                 Button(action: {
                     // Apple 로그인 로직
                 }) {
