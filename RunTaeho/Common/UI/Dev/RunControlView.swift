@@ -25,21 +25,30 @@ struct DevButton: View {
 }
 
 struct VelocityDevButtonView: View {
+
+    @ObservedObject var viewModel: RunningViewModel
     
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 8)
+        VStack {
+            ZStack {            
+                RoundedRectangle(cornerRadius: 8)
                 .fill(Color(white: 0.95))
                 .frame(width: 140, height: 44)
             
-            HStack(spacing: 8) {
-                DevButton(title: "Go") {
-                    Unity.shared.sendMessage("Charactor", methodName: "SetSpeed", parameter: "5")
+                HStack(spacing: 8) {
+                    DevButton(title: "Go") {
+                        Unity.shared.sendMessage("Charactor", methodName: "SetSpeed", parameter: "5")
+                    }
+                    
+                    DevButton(title: "Stop") {
+                        Unity.shared.sendMessage("Charactor", methodName: "SetSpeed", parameter: "0")
+                    }
                 }
-                
-                DevButton(title: "Stop") {
-                    Unity.shared.sendMessage("Charactor", methodName: "SetSpeed", parameter: "0")
-                }
+            }
+            Button(action: {
+                viewModel.addDistance(distance: 10000.0)
+            }){
+                Text("거리 추가")
             }
         }
     }

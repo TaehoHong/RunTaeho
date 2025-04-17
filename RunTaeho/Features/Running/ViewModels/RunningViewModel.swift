@@ -30,6 +30,7 @@ class RunningViewModel: ObservableObject {
         runningStatus = .Running
         timeManager.start()
         locationManager.startTracking()
+        charactorMoveMentService.moveCharactor(speed: 5.0)
     }
     
     func pauseRunning() {
@@ -41,6 +42,7 @@ class RunningViewModel: ObservableObject {
     func resumeRunning() {
         runningStatus = .Running
         timeManager.resume()
+        charactorMoveMentService.moveCharactor(speed: 5.0)
     }
     
     func stopRunning() {
@@ -51,7 +53,7 @@ class RunningViewModel: ObservableObject {
     
     private func updateStats() {
         if runningStatus == .Running {
-            distanceMeter = locationManager.distanceMeter
+            distanceMeter += locationManager.distanceDelta
             elapsedTime  = timeManager.elapsedTime
             
             if locationManager.isRecived {
@@ -66,6 +68,10 @@ class RunningViewModel: ObservableObject {
                 }
             }
         }
+    }
+
+    func addDistance(distance: Double) {
+        self.distanceMeter += distance
     }
 }
 

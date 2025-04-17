@@ -111,7 +111,7 @@ struct DebugView: View {
     var body: some View {
         HStack(alignment: .top) {
 
-            VelocityDevButtonView()
+            VelocityDevButtonView(viewModel: viewModel)
             
             Spacer()
 

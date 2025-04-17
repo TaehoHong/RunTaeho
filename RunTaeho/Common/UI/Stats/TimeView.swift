@@ -27,13 +27,8 @@ struct TimeView: View {
             Text(timeText)
                 .font(CustomFont.stats())
         }
-        .frame(width: 105, height: 52)
+        // .frame(width: 105, height: 52)
         .foregroundColor(.black)
         .multilineTextAlignment(.center)
     }
 }
-
-#Preview {
-    TimeView(hours: 1, minutes: 23, seconds: 45)
-}
-
