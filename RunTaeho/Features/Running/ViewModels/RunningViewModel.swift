@@ -4,7 +4,7 @@ import CoreLocation
 
 // RunningViewModel
 class RunningViewModel: ObservableObject {
-    @Published private(set) var runningStatus: eRunningStatus = .Stopped
+    @Published private(set) var runningStatus: RunningStatus = .Stopped
     @Published private(set) var distanceMeter: Double = 0.0
     @Published private(set) var elapsedTime: (hours: Int, minutes: Int, seconds: Int) = (0, 0, 0)
     private var previousElapedSeconds: Int = 0

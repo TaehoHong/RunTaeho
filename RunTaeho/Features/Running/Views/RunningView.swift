@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct RunningView: View {
-    @State private var loading = false
+    @State private var viewState: ViewState = .Loading
     @State private var showState = false
     @State private var showLayout = false
     @State private var alignment = Alignment.top
@@ -11,76 +11,83 @@ struct RunningView: View {
     
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            if loading {
-                // Unity is starting up or shutting down
-                ProgressView("Loading...")
-                    .tint(.white)
-                    .foregroundStyle(.white)
-            } else if let unityContainer = unity.view.flatMap({ UIViewContainer(containee: $0) }) {
-                GeometryReader { geometry in
-                    let width = geometry.size.width
-                    let height = geometry.size.height
-                    
-                    // UnityContainer occupies the top half of the screen
-                    unityContainer
-                        .ignoresSafeArea()
-                        .frame(width: width, height: height * 0.5, alignment: .top)
-                    
-                    DebugView(viewModel: viewModel)
 
-                    VStack(spacing: 10) {
-                        Spacer()
-                        
-                        // Control panel placed below UnityContainer
-                        if viewModel.runningStatus == .Stopped {
-                            VStack(spacing: 20) {
-                                StartButton {
-                                    viewModel.startRunning()
-                                }
-                            }
-                        } else {
-                            VStack(spacing: 25) {
-                                // Top stats (BPM, Pace, Time) with centered Distance
-                                StatsView(viewModel: viewModel)
-                                
-                                if viewModel.runningStatus == .Running {
-                                    PauseButton {
-                                        viewModel.pauseRunning()
-                                    }
-                                    .padding(.bottom, 0)
-                                } else if viewModel.runningStatus == .Paused {
-                                    HStack(spacing: 40) {
-                                        Spacer()
-                                        StopButton { 
-                                            viewModel.stopRunning()
-                                        }
-                                        Spacer()
-                                        PlayButton { 
-                                            viewModel.resumeRunning()
-                                        }
-                                        Spacer()
-                                    }
-                                }
-                            }
-                            .frame(width: width, height: height * 0.5)
-                            .position(x: width / 2, y: height * 0.75)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-            } else {
-                VStack {
-                    Text("Starting Unity...")
-                    ProgressView()
+            switch viewState {
+                case .Loading : 
+                    LoadingView()
                         .onAppear {
-                            loading = true
                             DispatchQueue.main.async {
                                 unity.start()
-                                loading = false
+                                viewState = .Loaded
                             }
                         }
-                }
+
+                case .Loaded : 
+                    let unityContainer = unity.view.flatMap({ UIViewContainer(containee: $0) }) 
+                    GeometryReader { geometry in
+                        let width = geometry.size.width
+                        let height = geometry.size.height
+                        
+                        // UnityContainer occupies the top half of the screen
+                        unityContainer
+                            .ignoresSafeArea()
+                            .frame(width: width, height: height * 0.5, alignment: .top)
+                        
+                        DebugView(viewModel: viewModel)
+
+                        VStack(spacing: 10) {
+                            Spacer()
+                            
+                            // Control panel placed below UnityContainer
+                            if viewModel.runningStatus == .Stopped {
+                                VStack(spacing: 20) {
+                                    StartButton {
+                                        viewModel.startRunning()
+                                    }
+                                }
+                            } else {
+                                VStack(spacing: 25) {
+                                    // Top stats (BPM, Pace, Time) with centered Distance
+                                    StatsView(viewModel: viewModel)
+                                    
+                                    if viewModel.runningStatus == .Running {
+                                        PauseButton {
+                                            viewModel.pauseRunning()
+                                        }
+                                        .padding(.bottom, 0)
+                                    } else if viewModel.runningStatus == .Paused {
+                                        HStack(spacing: 40) {
+                                            Spacer()
+                                            StopButton { 
+                                                viewModel.stopRunning()
+                                            }
+                                            Spacer()
+                                            PlayButton { 
+                                                viewModel.resumeRunning()
+                                            }
+                                            Spacer()
+                                        }
+                                    }
+                                }
+                                .frame(width: width, height: height * 0.5)
+                                .position(x: width / 2, y: height * 0.75)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+            // case .None:
+            //     throw Error("")
+            // case .faliure:
+            //     print("None")
             }
+
+            // if viewState == .Loading {
+            //     // Unity is starting up or shutting down
+                
+            // } else if 
+            // } else {
+                
+            // }
         }
         .background(Color.white)
         .safeAreaPadding()
