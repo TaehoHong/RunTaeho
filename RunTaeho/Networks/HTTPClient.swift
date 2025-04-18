@@ -12,7 +12,7 @@ class HTTPClient {
     private init() { }
 
     
-    func get<T: Decodable>(url: String, requestParam: RequestParam?, responseType: T.Type, completion: @escaping(Result<T, Error>) -> Void) {
+    func get<T: Decodable>(url: String, headers: [String: String]? = nil, requestParam: RequestParam? = nil, responseType: T.Type, completion: @escaping(Result<T, Error>) -> Void) {
 
         var urlString = url
 
@@ -26,11 +26,14 @@ class HTTPClient {
             completion(.failure(NetworkError.badURL))
             return
         }
-        
+
         print("urlString: \(urlString)")
         var request: URLRequest = URLRequest(url: requestURL) 
         request.httpMethod = "GET"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        headers?.forEach { (key: String, value: String) in
+            request.addValue(key, forHTTPHeaderField: value)       
+        }
 
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {

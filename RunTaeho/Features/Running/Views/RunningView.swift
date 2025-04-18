@@ -1,24 +1,23 @@
 import SwiftUI
 
 struct RunningView: View {
-    @State private var viewState: ViewState = .Loading
     @State private var showState = false
     @State private var showLayout = false
     @State private var alignment = Alignment.top
     
     @StateObject public var viewModel = RunningViewModel()
     @ObservedObject private var unity = Unity.shared
+    @StateObject private var appState = AppState.shared
     
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-
-            switch viewState {
+            switch appState.viewState {
                 case .Loading : 
                     LoadingView()
                         .onAppear {
                             DispatchQueue.main.async {
                                 unity.start()
-                                viewState = .Loaded
+                                appState.setViewState(.Loaded)
                             }
                         }
 
@@ -39,7 +38,7 @@ struct RunningView: View {
                             Spacer()
                             
                             // Control panel placed below UnityContainer
-                            if viewModel.runningStatus == .Stopped {
+                            if appState.runningState == .Stopped {
                                 VStack(spacing: 20) {
                                     StartButton {
                                         viewModel.startRunning()
@@ -50,12 +49,12 @@ struct RunningView: View {
                                     // Top stats (BPM, Pace, Time) with centered Distance
                                     StatsView(viewModel: viewModel)
                                     
-                                    if viewModel.runningStatus == .Running {
+                                    if appState.runningState == .Running {
                                         PauseButton {
                                             viewModel.pauseRunning()
                                         }
                                         .padding(.bottom, 0)
-                                    } else if viewModel.runningStatus == .Paused {
+                                    } else if appState.runningState == .Paused {
                                         HStack(spacing: 40) {
                                             Spacer()
                                             StopButton { 
@@ -75,19 +74,7 @@ struct RunningView: View {
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
-            // case .None:
-            //     throw Error("")
-            // case .faliure:
-            //     print("None")
             }
-
-            // if viewState == .Loading {
-            //     // Unity is starting up or shutting down
-                
-            // } else if 
-            // } else {
-                
-            // }
         }
         .background(Color.white)
         .safeAreaPadding()
@@ -172,7 +159,7 @@ extension View {
 private func debugRunningStatus(viewModel: RunningViewModel) -> some View {
     HStack {
         Text("러닝 상태:")
-        Text("\(viewModel.runningStatus)")
+        Text("\(viewModel.appState.runningState)")
             .foregroundColor(.blue)
     }
     .font(.subheadline)

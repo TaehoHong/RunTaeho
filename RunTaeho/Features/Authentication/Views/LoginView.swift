@@ -27,7 +27,7 @@ struct LoginView: View {
             .frame(width: geometry.size.width, height: geometry.size.height * 0.5)
             .position(x: geometry.size.width / 2, y: geometry.size.height * 0.75)
             .fullScreenCover(isPresented: $viewModel.isLoggedIn) {
-                RunningView()
+                MainTabView()
             }
             .alert("로그인 실패", isPresented: $viewModel.showError) {
                 Button("확인", role: .cancel) { }

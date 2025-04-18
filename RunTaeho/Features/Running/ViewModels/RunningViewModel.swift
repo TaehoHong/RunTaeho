@@ -1,10 +1,11 @@
 import Foundation
+import SwiftUI
 import Combine
 import CoreLocation
 
 // RunningViewModel
 class RunningViewModel: ObservableObject {
-    @Published private(set) var runningStatus: RunningStatus = .Stopped
+    @StateObject public var appState = AppState.shared
     @Published private(set) var distanceMeter: Double = 0.0
     @Published private(set) var elapsedTime: (hours: Int, minutes: Int, seconds: Int) = (0, 0, 0)
     private var previousElapedSeconds: Int = 0
@@ -27,32 +28,32 @@ class RunningViewModel: ObservableObject {
     var locationAccuracy: Double { locationManager.locationAccuracy }
     
     func startRunning() {
-        runningStatus = .Running
+        appState.setRunningState(.Running)
         timeManager.start()
         locationManager.startTracking()
         charactorMoveMentService.moveCharactor(speed: 5.0)
     }
     
     func pauseRunning() {
-        runningStatus = .Paused
+        appState.setRunningState(.Paused)
         timeManager.pause()
         charactorMoveMentService.stopCharactor()
     }
     
     func resumeRunning() {
-        runningStatus = .Running
+        appState.setRunningState(.Running)
         timeManager.resume()
         charactorMoveMentService.moveCharactor(speed: 5.0)
     }
     
     func stopRunning() {
-        runningStatus = .Stopped
+        appState.setRunningState(.Stopped)
         timeManager.stop()
         locationManager.stopTracking()
     }
     
     private func updateStats() {
-        if runningStatus == .Running {
+        if appState.runningState == .Running {
             distanceMeter += locationManager.distanceDelta
             elapsedTime  = timeManager.elapsedTime
             
@@ -86,7 +87,7 @@ extension RunningViewModel {
     func printDebugStatus() {
         print("""
         🏃‍♂️ 러닝 상태:
-        - 실행 상태: \(runningStatus)
+        - 실행 상태: \(appState.runningState)
         - 총 거리: \(String(format: "%.2f", distanceMeter))m
         - 위치 권한: \(locationAuthStatus)
         - GPS 정확도: \(String(format: "%.2f", locationAccuracy))m
