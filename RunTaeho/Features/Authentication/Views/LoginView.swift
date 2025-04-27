@@ -16,6 +16,7 @@ struct LoginView: View {
                 .frame(width: 240, height: 38, alignment: .center)
                 
                 Button(action: {
+                    viewModel.signInDebugg()
                     // Apple 로그인 로직
                 }) {
                     Image("appleid_button")

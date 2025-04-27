@@ -22,4 +22,14 @@ class LoginViewModel: ObservableObject {
             }
         }
     }
+
+    func signInDebugg() {
+        Task {
+            do {
+                isLoggedIn = true
+            } catch {
+                showError = true
+            }
+        }
+    }
 }

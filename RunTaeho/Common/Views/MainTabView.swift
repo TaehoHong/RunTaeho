@@ -14,7 +14,7 @@ struct MainTabView: View {
                 case 1:
                     RunningView()
                 case 2:
-                    StatsMainView()
+                    StatisticView()
                 default:
                     RunningView()
                 }
