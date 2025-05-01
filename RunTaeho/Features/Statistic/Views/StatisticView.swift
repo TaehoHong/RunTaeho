@@ -7,7 +7,7 @@ struct StatisticView: View {
     var body: some View {
         VStack(spacing: 20) {
             PeriodPickerView(viewModel: viewModel)
-            ChartSectionView(viewModel: viewModel.chartViewModel)
+            RunningChartView(viewModel: viewModel.chartViewModel)
             StatisticsSummaryView(viewModel: viewModel)
             RecordsListView(viewModel: viewModel)
         }

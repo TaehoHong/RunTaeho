@@ -3,7 +3,7 @@ import GoogleSignInSwift
 
 struct LoginView: View {
     @StateObject private var viewModel = LoginViewModel()
-    
+
     var body: some View {
         GeometryReader { geometry in
             VStack(spacing: 10) {
@@ -14,7 +14,7 @@ struct LoginView: View {
                         viewModel.signIn()
                     })
                 .frame(width: 240, height: 38, alignment: .center)
-                
+
                 Button(action: {
                     viewModel.signInDebugg()
                     // Apple 로그인 로직
@@ -34,6 +34,6 @@ struct LoginView: View {
                 Button("확인", role: .cancel) { }
             }
             .navigationTitle("로그인")
-        }   
+        }
     }
 }

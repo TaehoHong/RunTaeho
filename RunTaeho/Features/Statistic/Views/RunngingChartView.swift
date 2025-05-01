@@ -2,9 +2,10 @@ import SwiftUI
 import Foundation
 import Charts
 
-struct ChartSectionView: View {
-    @ObservedObject var viewModel: ChartViewModel
-    
+struct RunningChartView: View {
+
+    @ObservedObject var viewModel: RunningChartViewModel
+
     var body: some View {
         VStack(spacing: 0) {
             Text(viewModel.periodHeaderTitle)
@@ -12,7 +13,7 @@ struct ChartSectionView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 10)
                 .padding(.bottom, 5)
-            
+
             if viewModel.chartData.isEmpty {
                 // 데이터가 없을 때 빈 상태 표시
                 VStack(spacing: 10) {
@@ -21,7 +22,7 @@ struct ChartSectionView: View {
                     Text("현재 기간에 러닝 기록이 없습니다.")
                         .font(.caption)
                         .foregroundColor(.gray)
-                    
+
                     Button("차트 데이터 갱신") {
                         viewModel.updateChartData()
                     }
@@ -37,41 +38,39 @@ struct ChartSectionView: View {
             viewModel.updateChartData()
         }
     }
-    
+
     private var chartContent: some View {
         // Y축 스케일 계산
         let maxYValue = viewModel.maxChartDistance + 3
         let xAxisValues = viewModel.getXAxisValues()
-        let xStart = xAxisValues.first ?? Date()
-        let xEnd = xAxisValues.last ?? Date()
-    
 
-        return Chart { 
+        return Chart {
             ForEach(viewModel.chartData) { data in
                 BarMark(
-                    x: .value("Date", data.date, unit: viewModel.getDateUnit()),
+                    x: .value("Date", data.date),// unit: viewModel.getDateUnit()),
                     y: .value("Distance", data.distance),
-                    width: 10
+                    width: viewModel.period == .month ? 5 : 10
                 )
                 .cornerRadius(4)
                 .foregroundStyle(Color.blue.gradient)
             }
         }
         .chartYScale(domain: 0...maxYValue)
-        .chartXScale(domain: .automatic(includesZero: false))
+        .chartXScale(
+            domain: .automatic(includesZero: false),
+            range: .plotDimension(padding: 10)
+        )
         .chartXAxis {
-            // X축 값들을 미리 가져오기
-            // let _ = print("xAxisValues: \(xAxisValues)")
-            
+
             AxisMarks(preset: .aligned, values: xAxisValues) { value in
-                
                 if let date = value.as(Date.self) {
-                    AxisValueLabel(centered: true) {
+                    AxisValueLabel(centered: false) {
                         let text = viewModel.formatXAxisLabel(for: date)
-                        let _ = print("text: \(text)")
+                        let _ = print("text: \(text), date : \(date)")
                         Text(text)
                             .font(CustomFont.custom(size: 10))
                     }
+                    AxisTick()
                     // 그리드 선 제거
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 0))
                 }
@@ -81,7 +80,7 @@ struct ChartSectionView: View {
             // Y축 사전 계산
             let maxValue = viewModel.maxChartDistance + 3
             let strideValue = maxValue / 5
-            
+
             // Y축 라벨 5개로 설정
             AxisMarks(position: .leading, values: .stride(by: strideValue > 0 ? strideValue : 1)) { value in
                 AxisGridLine()
