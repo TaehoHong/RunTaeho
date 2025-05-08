@@ -1,8 +1,8 @@
 import SwiftUI
 
-struct RecordsListView: View {
+struct RunningRecordListView: View {
     @ObservedObject var viewModel: StatisticViewModel
-    
+
     var body: some View {
         return ScrollView {
             LazyVStack(spacing: 10) {
@@ -10,14 +10,11 @@ struct RecordsListView: View {
                     RunningRecordRow(record: record)
                         .onAppear {
                             if record.id == viewModel.records.last?.id {
-                                viewModel.loadMoreRecords()
+                                Task {
+                                    try await viewModel.loadMoreRecords()
+                                }
                             }
                         }
-                }
-                
-                if viewModel.isLoading {
-                    ProgressView()
-                        .padding()
                 }
             }
             .padding()

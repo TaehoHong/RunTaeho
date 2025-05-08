@@ -4,18 +4,34 @@ import Combine
 
 class StatisticViewModel: ObservableObject {
     
-    private let runningRecordService: RunningRecordAPIProtocol
+    private let runningRecordService: RunningRecordService
     private let statisticsService: RunningChartService
+    private var startDate = Date().startOfMonth()
     
-    // 하위 뷰모델
     @Published var chartViewModel: RunningChartViewModel
     
-    // 발행 속성
+
     @Published var selectedPeriod: Period = .month {
         didSet {
             if oldValue != selectedPeriod {
                 chartViewModel.setPeriod(selectedPeriod)
             }
+            
+            records.removeAll()
+            
+            switch selectedPeriod {
+            case .month:
+                startDate = Date().startOfMonth()
+            case .week:
+                startDate = Date().startOfWeek()
+            case .year:
+                startDate = Date().startOfYear()
+            }
+            
+            Task {
+                await self.loadRuningRecords(startDate: startDate)
+            }
+            
         }
     }
     @Published var records: [RunningRecord] = [] {
@@ -24,20 +40,25 @@ class StatisticViewModel: ObservableObject {
         }
     }
     @Published var isLoading = false
-    @Published var currentPage = 0
+    @Published var error: Error?
+    var cursor: Int64 = 0
 
     
     // 초기화
     init() {
         // 차트 뷰모델 생성
         self.chartViewModel = RunningChartViewModel(period: .month)
-        self.runningRecordService = RunningRecordDummyService.shared
+        self.runningRecordService = RunningRecordService.shared
         self.statisticsService = RunningChartService.shared
         
         // 차트 뷰모델의 기간 변경 콜백 설정
         chartViewModel.onPeriodChanged = { [weak self] newPeriod in
             self?.selectedPeriod = newPeriod
-        }        
+        }
+
+        Task {
+            await self.loadRuningRecords(startDate: Date().startOfMonth())
+        }
     }
     
     // 필터링된 레코드
@@ -50,19 +71,43 @@ class StatisticViewModel: ObservableObject {
         return statisticsService.calculateStatistics(from: filteredRecords)
     }
     
-    // 더미 데이터 생성 (나중에 실제 데이터로 교체)
     
-    
-    // 더 많은 레코드 로드
-    func loadMoreRecords() {
+    @MainActor
+    func loadRuningRecords(startDate: Date, endDate: Date? = nil) async {
+        guard !isLoading else { return }
+
+        isLoading = true
+        do {
+            let runningRecordPage = try await runningRecordService.loadRuningRecords(startDate: startDate, endDate: endDate ?? Date())
+
+            self.records.append(contentsOf: runningRecordPage.data)
+            self.isLoading = false
+            self.cursor = runningRecordPage.cursor
+        } catch {
+            self.error = error
+            print("Error loading initial records: \(error)")
+        }
+        
+        self.records.sort{ x,y in x.date > y.date}
+    }
+
+
+    @MainActor
+    func loadMoreRecords() async {
         guard !isLoading else { return }
         
         isLoading = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            let newRecords = self.runningRecordService.getRunningRecords(page: self.currentPage, pageSize: 0)
-            self.records.append(contentsOf: newRecords)
-            self.currentPage += 1
+        do {
+            let newRecords = try await self.runningRecordService.loadMoreRecords(cursor: self.cursor, size: 30)
+            self.records.append(contentsOf: newRecords.data)
+            self.cursor = newRecords.cursor
             self.isLoading = false
+            
+        } catch {
+            self.error = error
+            print("Error loading initial records: \(error)")
         }
+        
+        self.records.sort{ x,y in x.date > y.date}
     }
 }

@@ -47,11 +47,7 @@ class RunningChartViewModel: ObservableObject {
 
     // 차트 데이터 업데이트
     func updateChartData() {
-        // 기존 데이터 초기화
         chartData.removeAll()
-
-        // 레코드 필터링
-//        let filteredRecords = runningChartService.filterRecordsByPeriod(records: records, period: period)
 
         // 차트 데이터 생성
         chartData = runningChartService.generateChartData(rowRecords: records, period: period)

@@ -1,4 +1,5 @@
+import Foundation
+
 protocol RunningRecordAPIProtocol {
-//    func getRunningRecords() async throws -> [RunningRecord]
-    func getRunningRecords(page: Int, pageSize: Int) -> [RunningRecord]
+    func getRunningRecords(cursor: Int64?, size: Int?, startDate: Date?, endDate: Date?) async throws -> Pageable<RunningRecord>
 }

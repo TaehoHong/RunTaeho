@@ -9,13 +9,13 @@ struct StatisticView: View {
             PeriodPickerView(viewModel: viewModel)
             RunningChartView(viewModel: viewModel.chartViewModel)
             StatisticsSummaryView(viewModel: viewModel)
-            RecordsListView(viewModel: viewModel)
+            RunningRecordListView(viewModel: viewModel)
         }
-        .onAppear {
-            if viewModel.records.isEmpty {
-                viewModel.loadMoreRecords()
-            }
-        }
+//        .onAppear {
+//            if viewModel.records.isEmpty {
+//                viewModel.loadMoreRecords()
+//            }
+//        }
     }
 }
 
