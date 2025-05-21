@@ -10,7 +10,7 @@ struct MainTabView: View {
             Group {
                 switch selectedTab {
                 case 0:
-                    ProfileView()
+                    MyInfoView()
                 case 1:
                     RunningView()
                 case 2:
