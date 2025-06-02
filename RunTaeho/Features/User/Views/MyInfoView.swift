@@ -2,20 +2,12 @@ import SwiftUI
 
 struct MyInfoView: View {
     @ObservedObject var viewModel = UserProfileViewModel()
+    @EnvironmentObject var userStateManager: UserStateManager
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
-                    // 헤더 타이틀
-    //                HStack {
-    //                    Text("내 정보")
-    //                        .font(CustomFont.custom(size: 28))
-    //                        .foregroundColor(Color(hexCode: "333333"))
-    //                    Spacer()
-    //                }
-    //                .padding(.horizontal, 20)
-    //                .padding(.top, 20)
                     
                     // 프로필 카드
                     ProfileCard()
@@ -28,6 +20,11 @@ struct MyInfoView: View {
                     // 메뉴 설정 항목들
                     MenuSettingsCard()
                         .padding(.horizontal, 20)
+                    
+                    // 로그아웃 버튼
+                    LogoutButton()
+                        .padding(.horizontal, 20)
+                        .padding(.top, 20)
                     
                     Spacer()
                 }
@@ -42,6 +39,8 @@ struct MyInfoView: View {
 
 // 프로필 카드
 struct ProfileCard: View {
+    @EnvironmentObject var userStateManager: UserStateManager
+    
     var body: some View {
         HStack(spacing: 15) {
             // 프로필 이미지
@@ -55,12 +54,15 @@ struct ProfileCard: View {
             
             // 프로필 정보
             VStack(alignment: .leading, spacing: 8) {
-                Text("달려라 태호군")
+                Text(userStateManager.currentUser?.displayName ?? "사용자")
                     .font(CustomFont.custom(size: 36))
                     .foregroundColor(.black)
-//                Text("러너 Lv.42 | 활동량 상위 5%")
-//                    .font(.system(size: 16))
-//                    .foregroundColor(Color(hex: "808080"))
+                
+                if let user = userStateManager.currentUser {
+                    Text("러너 Lv.\(user.level) | 포인트: \(user.totalPoints)P")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color(hexCode: "808080"))
+                }
             }
             
             Spacer()
@@ -73,13 +75,15 @@ struct ProfileCard: View {
 
 // 메인 메뉴 카드
 struct MainMenuCard: View {
+    @EnvironmentObject var userStateManager: UserStateManager
+    
     var body: some View {
         HStack(spacing: 0) {
             // 포인트 섹션
             NavigationLink(destination: PointView()) {
                 VStack(spacing: 5) {
                     Image("PointIcon")
-                    Text("10,000")
+                    Text("\(userStateManager.currentUser?.totalPoints ?? 0)")
                         .font(CustomFont.custom(size: 29))
                         .foregroundColor(.black)
                 }
@@ -88,10 +92,7 @@ struct MainMenuCard: View {
             .buttonStyle(PlainButtonStyle())
             
             // 구분선
-            Rectangle()
-                .fill(Color(hexCode: "e6e6e6"))
-                .frame(width: 1)
-                .padding(.vertical, 10)
+            verticalDivider
             
             // 내 신발 섹션
             VStack(spacing: 8) {
@@ -105,10 +106,7 @@ struct MainMenuCard: View {
             .frame(maxWidth: .infinity)
             
             // 구분선
-            Rectangle()
-                .fill(Color(hexCode: "e6e6e6"))
-                .frame(width: 1)
-                .padding(.vertical, 10)
+            verticalDivider
             
             // 아바타 섹션
             VStack(spacing: 8) {
@@ -128,21 +126,27 @@ struct MainMenuCard: View {
     }
 }
 
+var verticalDivider: some View {
+    Rectangle()
+        .fill(Color(hexCode: "e6e6e6"))
+        .frame(width: 1)
+        .padding(.vertical, 10)
+}
+
 // 메뉴 설정 카드
 struct MenuSettingsCard: View {
-    let menuTitles = [
-        "연결 계정 관리",
-        "이용 약관",
-        "공지사항"
-    ]
+    @State private var selectedMenuType: (any MenuDisplayable.Type)?
     
     var body: some View {
         VStack(spacing: 0) {
-            ForEach(Array(menuTitles.enumerated()), id: \.offset) { index, item in
-                MenuSettingRow(title: item)
+            ForEach(Array(MenuRegistry.enabledMenus.enumerated()), id: \.offset) { index, menuData in
+                let (title, menuType) = menuData
+                MenuSettingRow(title: title) {
+                    selectedMenuType = menuType
+                }
                 
                 // 구분선 (마지막 항목 제외)
-                if index < menuTitles.count - 1 {
+                if index < MenuRegistry.enabledMenus.count - 1 {
                     Rectangle()
                         .fill(Color(hexCode: "f2f2f2"))
                         .frame(height: 1)
@@ -152,16 +156,35 @@ struct MenuSettingsCard: View {
         }
         .background(Color.white)
         .cornerRadius(16)
+        .fullScreenCover(item: Binding<MenuTypeWrapper?>(
+            get: { selectedMenuType.map(MenuTypeWrapper.init) },
+            set: { selectedMenuType = $0?.menuType }
+        )) { wrapper in
+            MenuViewBuilder.createView(for: wrapper.menuType)
+        }
     }
+}
+
+// MARK: - MenuType Wrapper (Identifiable을 위해 필요)
+struct MenuTypeWrapper: Identifiable {
+    let id = UUID()
+    let menuType: any MenuDisplayable.Type
 }
 
 // 메뉴 설정 행
 struct MenuSettingRow: View {
     let title: String
+    let action: () -> Void
     
     var body: some View {
+        Button(action: action) {
+            menuRowContent
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var menuRowContent: some View {
         HStack(spacing: 15) {
-            
             // 제목
             Text(title)
                 .font(CustomFont.custom(size: 24))
@@ -176,5 +199,41 @@ struct MenuSettingRow: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 15)
+    }
+}
+
+// MARK: - 로그아웃 버튼
+struct LogoutButton: View {
+    @EnvironmentObject var userStateManager: UserStateManager
+    @State private var showLogoutAlert = false
+    
+    var body: some View {
+        Button(action: {
+            showLogoutAlert = true
+        }) {
+            HStack {
+                Image(systemName: "rectangle.portrait.and.arrow.right")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.red)
+                
+                Text("로그아웃")
+                    .font(CustomFont.custom(size: 24))
+                    .foregroundColor(.red)
+                
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 15)
+        }
+        .background(Color.white)
+        .cornerRadius(16)
+        .alert("로그아웃", isPresented: $showLogoutAlert) {
+            Button("취소", role: .cancel) { }
+            Button("로그아웃", role: .destructive) {
+                userStateManager.logout()
+            }
+        } message: {
+            Text("정말로 로그아웃하시겠습니까?")
+        }
     }
 }

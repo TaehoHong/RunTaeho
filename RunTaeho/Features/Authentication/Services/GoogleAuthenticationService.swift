@@ -33,7 +33,7 @@ class GoogleAuthenticationService: AuthenticationProtocol {
             print("authCode: \(authCode)")
             print("IDToken: \(result.user.idToken)")
             
-            return try await AuthenticationService.shared.getToken(authType: .Google, code: authCode)
+            return try await AuthenticationService.shared.getToken(provider: .google, code: authCode)
             
         } catch {
             print("error: \(error.localizedDescription)")
