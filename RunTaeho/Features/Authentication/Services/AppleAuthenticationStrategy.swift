@@ -3,10 +3,7 @@ import Foundation
 
 // MARK: - Apple 인증 전략
 class AppleAuthenticationStrategy: NSObject, AuthenticationStrategy {
-    
-    // MARK: - AuthenticationStrategy 구현
-    var providerName: String { "Apple" }
-    var authType: AuthProviderType { .apple }
+    let authProvider = AuthProvider.apple
     
     // MARK: - Private Properties
     private var currentContinuation: CheckedContinuation<UserAuthData, Error>?
@@ -53,7 +50,7 @@ class AppleAuthenticationStrategy: NSObject, AuthenticationStrategy {
         print("Apple Auth Code: \(authCode)")
         
         // 서버에서 토큰 획득
-        let tokenDto = try await AuthenticationService.shared.getToken(provider: authType, code: authCode)
+        let tokenDto = try await AuthenticationService.shared.getToken(provider: authProvider, code: authCode)
         
         return UserAuthData(
             id: tokenDto.userId,

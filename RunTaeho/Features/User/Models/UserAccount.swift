@@ -15,14 +15,22 @@ struct UserAccount: Codable, Identifiable {
         self.connectedAt = connectedAt
         self.email = email
     }
+    
+    func disconnect() -> UserAccount {
+        UserAccount(
+            id: self.id,
+            provider: self.provider,
+            isConnected: false,
+            connectedAt: self.connectedAt,
+            email: self.email
+        )
+    }
 }
 
 // MARK: - 연결 계정 상태
 enum AccountConnectionStatus {
     case connected
     case none
-    case disconnected
-    case failed
     
     var buttonColor: String {
         switch self {
@@ -30,10 +38,6 @@ enum AccountConnectionStatus {
             return "#d9d9d9"
         case .connected:
             return "#7ae87a"
-        case .disconnected:
-            return "#d9d9d9"
-        case .failed:
-            return "#ff6b6b"
         }
     }
 }

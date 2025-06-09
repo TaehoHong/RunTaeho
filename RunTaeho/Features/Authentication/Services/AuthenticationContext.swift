@@ -29,14 +29,13 @@ class AuthenticationStrategyFactory {
 // MARK: - 인증 컨텍스트 (Strategy Pattern의 Context)
 class AuthenticationContext: ObservableObject {
     
-    // MARK: - Published Properties
-    @Published var isAuthenticated = false
-    @Published var currentUser: UserAuthData?
-    @Published var isLoading = false
+    static let shared = AuthenticationContext()
+    
     @Published var errorMessage: String?
     
     // MARK: - Private Properties
     private var currentStrategy: AuthenticationStrategy?
+    private let userAccountService = UserAccountService.shared
     
     // MARK: - Public Methods
     
@@ -51,37 +50,26 @@ class AuthenticationContext: ObservableObject {
     }
     
     /// 로그인 수행
-    func signIn() async {
+    func signIn() async throws -> UserAuthData? {
         guard let strategy = currentStrategy else {
             await MainActor.run {
                 self.errorMessage = "인증 전략이 설정되지 않았습니다."
             }
-            return
-        }
-        
-        await MainActor.run {
-            self.isLoading = true
-            self.errorMessage = nil
+            return nil
         }
         
         do {
-            let userData = try await strategy.signIn()
-            
-            await MainActor.run {
-                self.currentUser = userData
-                self.isAuthenticated = true
-                self.isLoading = false
-            }
+            return try await strategy.signIn()
             
         } catch {
             await MainActor.run {
                 self.errorMessage = error.localizedDescription
-                self.isAuthenticated = false
-                self.isLoading = false
             }
             
             print("Authentication failed: \(error)")
         }
+        
+        return nil
     }
     
     /// 로그아웃 수행
@@ -94,21 +82,33 @@ class AuthenticationContext: ObservableObject {
         do {
             try strategy.signOut()
             
-            self.currentUser = nil
-            self.isAuthenticated = false
-            self.errorMessage = nil
-            
         } catch {
             self.errorMessage = error.localizedDescription
             print("Sign out failed: \(error)")
         }
     }
     
+    func disconnect() {
+        
+        guard let strategy = currentStrategy else {
+            self.errorMessage = "인증 전략이 설정되지 않았습니다."
+            return
+        }
+        
+        do {
+            try strategy.signOut()
+            userAccountService.disconnect(provider: currentStrategy!.authProvider)
+            
+        } catch {
+            self.errorMessage = error.localizedDescription
+            print("Sign out failed: \(error)")
+        }
+        
+    }
+    
     /// 현재 로그인 상태 확인
     func checkSignInStatus() {
         guard let strategy = currentStrategy else { return }
-        
-        self.isAuthenticated = strategy.isSignedIn()
     }
     
     /// 에러 메시지 클리어

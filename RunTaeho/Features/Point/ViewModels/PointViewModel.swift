@@ -8,6 +8,10 @@ class PointViewModel: ObservableObject {
     @Published var pointHistory: [PointHistoryItem] = PointHistoryItem.sampleData
     @Published var currentPoints: Int = 10000
     
+    init(point: Int) {
+        self.currentPoints = point
+    }
+    
     // 필터링된 포인트 내역
     var filteredPointHistory: [PointHistoryItem] {
         switch selectedFilter {

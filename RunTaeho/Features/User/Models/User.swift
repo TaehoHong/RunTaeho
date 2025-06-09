@@ -3,7 +3,6 @@ import Foundation
 // MARK: - User Model
 struct User: Codable {
     let id: Int
-    let email: String
     var nickname: String
     var userAccounts: [UserAccount]
     var profileImageURL: String?
@@ -17,18 +16,9 @@ struct User: Codable {
         return nickname.isEmpty ? "사용자" : nickname
     }
     
-    var isConnectedToGoogle: Bool {
-        return userAccounts.contains { $0.provider == .google }
-    }
-    
-    var isConnectedToApple: Bool {
-        return userAccounts.contains { $0.provider == .apple }
-    }
-    
     // MARK: - Initialization
-    init(id: Int, email: String, nickname: String, userAccounts: [UserAccount] = [], profileImageURL: String? = nil, totalPoints: Int = 0, level: Int = 1, createdAt: Date = Date(), lastLoginAt: Date? = nil) {
+    init(id: Int, nickname: String, userAccounts: [UserAccount] = [], profileImageURL: String? = nil, totalPoints: Int = 0, level: Int = 1, createdAt: Date = Date(), lastLoginAt: Date? = nil) {
         self.id = id
-        self.email = email
         self.nickname = nickname
         self.userAccounts = userAccounts
         self.profileImageURL = profileImageURL

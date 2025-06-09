@@ -1,58 +1,137 @@
 import SwiftUI
+import Combine
 
 @MainActor
 class LoginViewModel: ObservableObject {
-    @Published public var isLoggedIn = false
-    @Published public var userAuthData: UserAuthData?
+    // MARK: - Single Source of Truth
+    private let userStateManager = UserStateManager.shared
+    private let authContext = AuthenticationContext.shared
+    
+    // MARK: - Computed Properties (읽기 전용)
+    var isLoggedIn: Bool { userStateManager.isLoggedIn }
+    var currentUser: User? { userStateManager.currentUser }
+    
+    // MARK: - Local State (UI 전용)
     @Published var showError = false
-    @Published var isLoading = false
     @Published var errorMessage: String?
     
-    // MARK: - Strategy Pattern Integration
-    private let authContext = AuthenticationContext()
+    // MARK: - Cancellables
+    private var cancellables = Set<AnyCancellable>()
     
     init() {
         // 기본적으로 Google 전략 설정
         authContext.setStrategy(for: .google)
+        
+        // init에서 바로 구독하지 않고 다음 런루프에서 설정
+        Task { @MainActor in
+            setupBindings()
+        }
+    }
+    
+    private func setupBindings() {
+        
+        // AuthContext의 에러 메시지를 구독
+        authContext.$errorMessage
+            .receive(on: DispatchQueue.main)
+            .removeDuplicates()  // 중복 값 제거
+            .sink { [weak self] error in
+                guard let self = self else { return }
+                
+                // 다음 런루프에서 실행하여 뷰 업데이트 사이클 충돌 방지
+                DispatchQueue.main.async {
+                    self.errorMessage = error
+                    self.showError = error != nil
+                }
+            }
+            .store(in: &cancellables)
     }
     
     // MARK: - Authentication Methods
     
     /// 특정 제공자로 로그인
     func signIn(with provider: AuthProvider) {
-        Task {
-            authContext.setStrategy(for: provider)
-            await authContext.signIn()
+        Task { @MainActor in
+            print("[LoginViewModel] signIn 시작")
             
-            // AuthContext 상태를 ViewModel에 반영
-            self.isLoggedIn = authContext.isAuthenticated
-            self.userAuthData = authContext.currentUser
-            self.isLoading = authContext.isLoading
-            self.errorMessage = authContext.errorMessage
-            self.showError = authContext.errorMessage != nil
+            authContext.setStrategy(for: provider)
+            let userAuthData = try await authContext.signIn()
+            
+            // 로그인 성공 시 UserStateManager 업데이트
+            if userAuthData != nil {
+                
+                print("[LoginViewModel] 인증 성공, User 객체 생성 중...")
+                
+                // UserAuthData를 User 모델로 변환
+                let user = User(
+                    id: userAuthData!.id,
+                    nickname: userAuthData!.nickname,
+                    userAccounts: [
+                        UserAccount(
+                            id: 1,
+                            provider: provider,
+                            isConnected: true,
+                            connectedAt: Date(),
+                            email: userAuthData!.email
+                        )
+                    ],
+                    profileImageURL: userAuthData!.profileImageURL
+                )
+                
+                print("[LoginViewModel] UserStateManager.login 호출 전")
+                
+                // 메인 큐에서 비동기로 실행
+                await MainActor.run {
+                    userStateManager.login(
+                        user: user,
+                        authToken: userAuthData!.accessToken,
+                        refreshToken: userAuthData!.refreshToken
+                    )
+                }
+                
+                print("[LoginViewModel] UserStateManager.login 호출 완료")
+            }
         }
     }
-    
-    /// Google 로그인 (기존 호환성)
-    func signIn() {
-        signIn(with: .google)
-    }
-    
     /// 로그아웃
     func signOut() {
         authContext.signOut()
         
-        // 상태 업데이트
-        self.isLoggedIn = authContext.isAuthenticated
-        self.userAuthData = authContext.currentUser
-        self.errorMessage = authContext.errorMessage
-        self.showError = authContext.errorMessage != nil
+        // UserStateManager를 통해 로그아웃 처리
+        userStateManager.logout()
     }
     
     /// 디버그 로그인
     func signInDebugg() {
         Task {
-            isLoggedIn = true
+            // 테스트용 사용자 데이터 생성
+            let debugUser = User(
+                id: 1234,
+                nickname: "테스트 사용자",
+                userAccounts: [
+                    UserAccount(
+                        id: 1,
+                        provider: .google,
+                        isConnected: true,
+                        connectedAt: Date(),
+                        email: "debug@gmail.com"
+                    ),
+                    UserAccount(
+                        id: 2,
+                        provider: .apple,
+                        isConnected: false,
+                        connectedAt: Date(),
+                        email: "debug@icloud.com"
+                    )
+                ],
+                profileImageURL: nil,
+            )
+            
+            // UserStateManager를 통해 로그인 처리
+            userStateManager.login(
+                user: debugUser,
+                authToken: "debug_access_token",
+                refreshToken: "debug_refresh_token"
+            )
         }
     }
     

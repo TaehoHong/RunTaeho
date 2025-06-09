@@ -1,10 +1,12 @@
 import SwiftUI
 
 struct PointView: View {
-    @StateObject private var viewModel = PointViewModel()
+    @StateObject private var viewModel = PointViewModel(point: UserStateManager.shared.getPoint())
     
     var body: some View {
         VStack(spacing: 0) {
+            HeadingView(title: "포인트")
+            
             // 포인트 정보 영역
             PointBalanceView(currentPoints: viewModel.currentPoints)
             

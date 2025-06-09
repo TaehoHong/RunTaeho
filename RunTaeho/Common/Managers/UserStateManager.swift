@@ -38,15 +38,21 @@ class UserStateManager: ObservableObject {
     
     // MARK: - Initialization
     private init() {
-        loadUserState()
-        incrementAppLaunchCount()
+        // init에서 바로 상태를 로드하지 않고 비동기로 처리
+        Task { @MainActor in
+            loadUserState()
+            incrementAppLaunchCount()
+        }
     }
     
     // MARK: - Public Methods
     
     /// 사용자 로그인
     func login(user: User, authToken: String, refreshToken: String? = nil) {
-        DispatchQueue.main.async {
+        // 다음 런루프에서 실행하여 뷰 업데이트 사이클 충돌 방지
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
             var updatedUser = user
             updatedUser.updateLastLogin()
             
@@ -61,7 +67,10 @@ class UserStateManager: ObservableObject {
     
     /// 사용자 로그아웃
     func logout() {
-        DispatchQueue.main.async {
+        // 다음 런루프에서 실행하여 뷰 업데이트 사이클 충돌 방지
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
             self.currentUser = nil
             self.authToken = nil
             self.refreshToken = nil
@@ -78,6 +87,30 @@ class UserStateManager: ObservableObject {
         user.updateProfile(nickname: nickname, profileImageURL: profileImageURL)
         currentUser = user
         saveUserState()
+    }
+    
+    // MARK: UserAccount
+    func getUserAccounts() -> [UserAccount] {
+        return currentUser?.userAccounts ?? []
+    }
+    
+    func disconnectUserAccount(provider: AuthProvider) {
+        guard var user = currentUser else { return }
+        
+        // 해당 provider의 계정 인덱스 찾기
+        if let index = user.userAccounts.firstIndex(where: { $0.provider == provider }) {
+            // 해당 계정의 연결 해제 - 새 인스턴스로 교체
+            user.userAccounts[index] = user.userAccounts[index].disconnect()
+            
+            // 변경된 user를 다시 저장
+            currentUser = user
+            saveUserState()
+        }
+    }
+    
+    // MARK: Point
+    func getPoint() -> Int {
+        return currentUser?.totalPoints ?? 0
     }
     
     /// 포인트 추가

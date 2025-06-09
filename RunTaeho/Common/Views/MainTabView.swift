@@ -26,6 +26,7 @@ struct MainTabView: View {
                 CustomTabBar(selectedTab: $selectedTab)
             }
         }
+        .background(Color.white)
         .accentColor(.blue)
     }
 }

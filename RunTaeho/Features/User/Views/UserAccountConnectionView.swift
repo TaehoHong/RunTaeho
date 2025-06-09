@@ -7,12 +7,11 @@ struct UserAccountConnectionView: View, MenuDisplayable {
     static var menuOrder: Int { 1 }
     
     @StateObject private var viewModel = ConnectedAccountViewModel()
-    @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
         VStack(spacing: 0) {
             // 헤더
-            header
+            HeadingView(title: "연결계정")
             
             // 메인 콘텐츠
             ScrollView {
@@ -43,32 +42,6 @@ struct UserAccountConnectionView: View, MenuDisplayable {
                 Text(errorMessage)
             }
         }
-    }
-    
-    // MARK: - 헤더
-    private var header: some View {
-        ZStack {
-            // 중앙 제목
-            Text("연결계정")
-                .font(.system(size: 24, weight: .medium))
-                .foregroundColor(.black)
-            
-            // 왼쪽 뒤로가기 버튼
-            HStack {
-                Button(action: {
-                    presentationMode.wrappedValue.dismiss()
-                }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 20))
-                        .foregroundColor(.black)
-                }
-                
-                Spacer()
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 15)
-        .padding(.bottom, 10)
     }
     
     // MARK: - 계정 연결 섹션

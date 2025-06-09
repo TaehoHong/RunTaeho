@@ -76,11 +76,14 @@ struct ProfileCard: View {
 // 메인 메뉴 카드
 struct MainMenuCard: View {
     @EnvironmentObject var userStateManager: UserStateManager
+    @State private var showPointView = false
     
     var body: some View {
         HStack(spacing: 0) {
             // 포인트 섹션
-            NavigationLink(destination: PointView()) {
+            Button(action: {
+                showPointView = true
+            }) {
                 VStack(spacing: 5) {
                     Image("PointIcon")
                     Text("\(userStateManager.currentUser?.totalPoints ?? 0)")
@@ -123,6 +126,9 @@ struct MainMenuCard: View {
         .padding(.horizontal, 15)
         .background(Color.white)
         .cornerRadius(16)
+        .fullScreenCover(isPresented: $showPointView) {
+            PointView()
+        }
     }
 }
 
