@@ -44,15 +44,25 @@ class AppleAuthenticationStrategy: NSObject, AuthenticationStrategy {
             throw AuthenticationError.noUserProfile
         }
         
+        
         guard let authorizationCode = appleIDCredential.authorizationCode,
-              let authCodeString = String(data: authorizationCode, encoding: .utf8) else {
+              let authCode = String(data: authorizationCode, encoding: .utf8) else {
             throw AuthenticationError.noAuthCode
         }
         
-        print("Apple Auth Code: \(authCodeString)")
+        print("Apple Auth Code: \(authCode)")
         
         // 서버에서 토큰 획득
-        return try await AuthenticationService.shared.getToken(provider: authType, code: authCodeString)
+        let tokenDto = try await AuthenticationService.shared.getToken(provider: authType, code: authCode)
+        
+        return UserAuthData(
+            id: tokenDto.userId,
+            email: appleIDCredential.email!,
+            nickname: (appleIDCredential.fullName?.familyName!)!,
+            accessToken: tokenDto.accessToken,
+            refreshToken: tokenDto.refreshToken,
+            profileImageURL: nil
+        )
     }
 }
 
