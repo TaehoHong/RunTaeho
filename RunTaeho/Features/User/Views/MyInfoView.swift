@@ -77,6 +77,7 @@ struct ProfileCard: View {
 struct MainMenuCard: View {
     @EnvironmentObject var userStateManager: UserStateManager
     @State private var showPointView = false
+    @State private var showMyShoesView = false
     
     var body: some View {
         HStack(spacing: 0) {
@@ -98,15 +99,20 @@ struct MainMenuCard: View {
             verticalDivider
             
             // 내 신발 섹션
-            VStack(spacing: 8) {
-                Image("shose")
-                    .foregroundColor(.black)
-                
-                Text("내 신발")
-                    .font(CustomFont.custom(size: 29))
-                    .foregroundColor(.black)
+            Button(action: {
+                showMyShoesView = true
+            }) {
+                VStack(spacing: 8) {
+                    Image("shose")
+                        .foregroundColor(.black)
+                    
+                    Text("내 신발")
+                        .font(CustomFont.custom(size: 29))
+                        .foregroundColor(.black)
+                }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
+            .buttonStyle(PlainButtonStyle())
             
             // 구분선
             verticalDivider
@@ -128,6 +134,9 @@ struct MainMenuCard: View {
         .cornerRadius(16)
         .fullScreenCover(isPresented: $showPointView) {
             PointView()
+        }
+        .fullScreenCover(isPresented: $showMyShoesView) {
+            MyShoesView()
         }
     }
 }

@@ -51,7 +51,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		F7861AD22DA61D030086BA2E /* Exceptions for "RunTaeho" folder in "RunTaeho" target */ = {
+		F7B5E5FE2DF828AB00C5BE16 /* Exceptions for "RunTaeho" folder in "RunTaeho" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -64,7 +64,7 @@
 		F784D0CC2D55FC9E002E4A85 /* RunTaeho */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				F7861AD22DA61D030086BA2E /* Exceptions for "RunTaeho" folder in "RunTaeho" target */,
+				F7B5E5FE2DF828AB00C5BE16 /* Exceptions for "RunTaeho" folder in "RunTaeho" target */,
 			);
 			path = RunTaeho;
 			sourceTree = "<group>";
