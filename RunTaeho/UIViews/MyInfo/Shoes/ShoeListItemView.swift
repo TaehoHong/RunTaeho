@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ShoeListItem: View {
+struct ShoeListItemView: View {
     let viewModel: ShoeListItemViewModel
     let onArchive: () -> Void
     let onDelete: () -> Void
@@ -102,14 +102,14 @@ struct ShoeListItem: View {
             .gesture(
                 DragGesture()
                     .onChanged { value in
-                        let maxOffset = viewModel.isMain ? -121 : -182  // 착용 버튼이 있으면 더 넓게
-                        if value.translation.width < 0 && value.translation.width > maxOffset {
+                        let maxOffset = viewModel.isMain ? -121.0 : -182.0  // 착용 버튼이 있으면 더 넓게
+                        if value.translation.width < 0.0 && value.translation.width > maxOffset {
                             offset = value.translation.width
                         }
                     }
                     .onEnded { value in
                         withAnimation(.spring()) {
-                            let maxOffset = viewModel.isMain ? -121 : -182
+                            let maxOffset = viewModel.isMain ? -121.0 : -182.0
                             if value.translation.width < -60 {
                                 offset = maxOffset
                                 isSwiped = true
@@ -135,23 +135,5 @@ struct ShoeListItem: View {
             Rectangle()
                 .stroke(Color(hexCode: "E6E6E6"), lineWidth: 1)
         )
-    }
-}
-
-struct ShoeListItem_Previews: PreviewProvider {
-    static var previews: some View {
-        ShoeListItem(
-            viewModel: ShoeListItemViewModel(
-                shoe: Shoe(
-                    brand: "아디다스",
-                    model: "울트라부스트 22",
-                    totalDistance: 123.4
-                )
-            ),
-            onArchive: {},
-            onDelete: {},
-            onTap: {}
-        )
-        .previewLayout(.sizeThatFits)
     }
 }

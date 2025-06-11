@@ -35,16 +35,18 @@ class ShoesViewModel: ObservableObject {
         isLoading = false
     }
     
-    func addShoe(_ shoeDto: AddShoeDto) {
+    func addShoe(_ shoeViewDto: AddShoeViewDto) {
         Task {
             
-            // 첫 번째 신발이면 자동으로 활성화
-            if shoes.isEmpty {
-                shoeDto.isMain = true
-            }
+            let addShoeDto = AddShoeDto(
+                brand: shoeViewDto.brand,
+                model: shoeViewDto.model,
+                targetDistance: shoeViewDto.targetDistance,
+                isMain: shoes.isEmpty
+            )
             
             do {
-                let addedShoe = try await service.addShoe(shoeDto)
+                let addedShoe = try await service.addShoe(addShoeDto)
                 shoes.append(addedShoe)
                 if addedShoe.isMain {
                     self.mainShoe = addedShoe
@@ -119,6 +121,23 @@ class ShoesViewModel: ObservableObject {
         } catch {
             errorMessage = "활성 신발 설정에 실패했습니다."
             print("Error setting active shoe: \(error)")
+        }
+    }
+    
+    func unarchiveShoe(_ shoe: Shoe) {
+        Task {
+            if let index = shoes.firstIndex(where: { $0.id == shoe.id }) {
+                var updatedShoe = shoes[index]
+                updatedShoe.isArchived = false
+                
+                do {
+                    let unarchivedShoe = try await service.updateShoe(updatedShoe)
+                    shoes[index] = unarchivedShoe
+                } catch {
+                    errorMessage = "신발 복원에 실패했습니다."
+                    print("Error unarchiving shoe: \(error)")
+                }
+            }
         }
     }
     

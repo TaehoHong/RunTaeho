@@ -17,12 +17,11 @@ class AddShoeViewModel: ObservableObject {
         return Double(targetDistance)!
     }
     
-    func createShoe() -> AddShoeDto {
-        return AddShoeDto(
+    func createShoe() -> AddShoeViewDto {
+        return AddShoeViewDto(
             brand: brand.trimmingCharacters(in: .whitespacesAndNewlines),
             model: model.trimmingCharacters(in: .whitespacesAndNewlines),
             targetDistance: targetDistanceValue,
-            isMain: false
         )
     }
     

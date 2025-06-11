@@ -5,6 +5,7 @@ struct ShoeListItemViewModel: Identifiable {
     let displayName: String
     let formattedDistance: String
     let isMain: Bool
+    let imageSystemName: String = "shoeprints.fill"
     
     init(shoe: Shoe) {
         self.id = shoe.id

@@ -2,7 +2,8 @@ import SwiftUI
 
 struct MyShoesView: View {
     @StateObject private var viewModel = ShoesViewModel()
-    @State private var showingAddShoe = false
+    @State private var showingAddShoeView = false
+    @State private var showingArchivedShoes = false
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -11,8 +12,21 @@ struct MyShoesView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // 헤더
-                HeadingView(title: "내 신발")
+                // 커스텀 헤더 (기존 HeadingView + 추가 버튼)
+                ZStack {
+                    // 기존 HeadingView 내용
+                    HeadingView(title: "내 신발")
+                    HStack {
+                        Spacer()
+                        AddButton {
+                            showingAddShoeView = true
+                        }
+                    }
+                    
+                }
+                .padding(.horizontal, 5)
+                .padding(.top, 15)
+                .padding(.bottom, 10)
                 
                 ScrollView {
                     VStack(spacing: 0) {
@@ -24,7 +38,7 @@ struct MyShoesView: View {
                         // 보유 신발 목록
                         VStack(alignment: .leading, spacing: 0) {
                             Text("보유 신발 목록")
-                                .font(CustomFont.custom(size: 18))
+                                .font(.system(size: 18, weight: .semibold))
                                 .padding(.horizontal, 25)
                                 .padding(.top, 43)
                                 .padding(.bottom, 18)
@@ -32,7 +46,7 @@ struct MyShoesView: View {
                             // 신발 리스트
                             VStack(spacing: 0) {
                                 ForEach(viewModel.shoes.filter { !$0.isArchived }) { shoe in
-                                    ShoeListItem(
+                                    ShoeListItemView(
                                         viewModel: ShoeListItemViewModel(shoe: shoe),
                                         onArchive: {
                                             viewModel.archiveShoe(shoe)
@@ -49,18 +63,19 @@ struct MyShoesView: View {
                                 }
                             }
                             
-                            // 새 신발 추가 버튼
+                            // 보관 신발 관리 버튼 (새로 추가된 부분)
                             Button(action: {
-                                showingAddShoe = true
+                                showingArchivedShoes = true
                             }) {
                                 HStack {
-                                    Text("+ 새 신발 추가")
-                                        .font(CustomFont.custom(size: 18))
+                                    Spacer()
+                                    Text("보관 신발 관리")
+                                        .font(.system(size: 18))
                                         .foregroundColor(.black)
+                                    Spacer()
                                 }
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 31)
-                                .background(Color(hexCode: "7AE87A"))
+                                .frame(height: 30)
+                                .background(Color(hexCode: "D9D9D9"))
                             }
                             .padding(.horizontal, 25)
                             .padding(.top, 32)
@@ -71,18 +86,13 @@ struct MyShoesView: View {
             }
         }
         .navigationBarHidden(true)
-        .sheet(isPresented: $showingAddShoe) {
+        .sheet(isPresented: $showingAddShoeView) {
             AddShoeView { newShoeDto in
                 viewModel.addShoe(newShoeDto)
             }
         }
-    }
-}
-
-struct MyShoesView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            MyShoesView()
+        .sheet(isPresented: $showingArchivedShoes) {
+            ArchivedShoesView(viewModel: viewModel)
         }
     }
 }
