@@ -9,7 +9,7 @@ struct AccountConnectionComponent: View {
         HStack(spacing: 15) {
             // 계정 제공자 텍스트
             Text(account.provider.displayName)
-                .font(.system(size: 24, weight: .regular))
+                .font(CustomFont.custom(size: 24))
                 .foregroundColor(Color(hexCode: "000000"))
             
             Spacer()
@@ -19,7 +19,7 @@ struct AccountConnectionComponent: View {
                 onToggleConnection(account.provider)
             }) {
                 Text(account.isConnected ? "연결중" : "연결")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(CustomFont.custom(size: 18))
                     .foregroundColor(Color(hexCode: "#000000"))
                     .frame(width: 80, height: 40)
                     .background(

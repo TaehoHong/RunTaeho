@@ -15,7 +15,7 @@ struct DevButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 15))
+                .font(CustomFont.custom(size: 15))
                 .foregroundColor(.white)
                 .frame(width: 60, height: 32)
                 .background(Color(red: 0.2, green: 0.2, blue: 0.2))

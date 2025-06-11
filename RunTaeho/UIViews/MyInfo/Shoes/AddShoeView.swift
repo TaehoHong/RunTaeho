@@ -19,7 +19,7 @@ struct AddShoeView: View {
                     // 브랜드 입력
                     VStack(alignment: .leading, spacing: 5) {
                         Text("브랜드")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(CustomFont.custom(size: 16))
                             .foregroundColor(.black)
                         
                         TextField("", text: $viewModel.brand)

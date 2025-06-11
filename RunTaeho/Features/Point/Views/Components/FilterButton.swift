@@ -17,7 +17,7 @@ struct FilterButton: View {
                     .foregroundColor(Color(hexCode: "333333"))
                 
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 12))
+                    .font(CustomFont.custom(size: 12))
                     .foregroundColor(Color(hexCode: "333333"))
                     .rotationEffect(.degrees(showDropdown ? 180 : 0))
             }

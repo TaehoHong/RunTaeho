@@ -17,7 +17,7 @@ struct NoticeView: View, MenuDisplayable {
             ScrollView {
                 VStack(spacing: 20) {
                     Text("공지사항 내용이 여기에 표시됩니다.")
-                        .font(.system(size: 16))
+                        .font(CustomFont.custom(size: 16))
                         .foregroundColor(.gray)
                         .padding()
                     
@@ -38,7 +38,7 @@ struct NoticeView: View, MenuDisplayable {
         ZStack {
             // 중앙 제목
             Text("공지사항")
-                .font(.system(size: 24, weight: .medium))
+                .font(CustomFont.custom(size: 24))
                 .foregroundColor(.black)
             
             // 왼쪽 뒤로가기 버튼
@@ -47,7 +47,7 @@ struct NoticeView: View, MenuDisplayable {
                     presentationMode.wrappedValue.dismiss()
                 }) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 20, weight: .medium))
+                        .font(CustomFont.custom(size: 20))
                         .foregroundColor(.black)
                 }
                 

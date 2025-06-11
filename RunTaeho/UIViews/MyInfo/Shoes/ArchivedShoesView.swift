@@ -20,7 +20,7 @@ struct ArchivedShoesView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         Text("보관 신발 목록")
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(CustomFont.custom(size: 18))
                             .padding(.horizontal, 25)
                             .padding(.top, 43)
                             .padding(.bottom, 18)

@@ -72,7 +72,7 @@ struct ShoeListItemView: View {
                     .overlay(
                         Image(systemName: viewModel.imageSystemName)
                             .foregroundColor(.gray)
-                            .font(.system(size: 24))
+                            .font(CustomFont.custom(size: 24))
                     )
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -92,7 +92,7 @@ struct ShoeListItemView: View {
                 if viewModel.isMain {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
-                        .font(.system(size: 20))
+                        .font(CustomFont.custom(size: 20))
                 }
             }
             .padding(.horizontal, 30)

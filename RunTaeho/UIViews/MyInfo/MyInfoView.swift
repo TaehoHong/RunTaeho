@@ -60,7 +60,7 @@ struct ProfileCard: View {
                 
                 if let user = userStateManager.currentUser {
                     Text("러너 Lv.\(user.level) | 포인트: \(user.totalPoints)P")
-                        .font(.system(size: 16))
+                        .font(CustomFont.custom(size: 16))
                         .foregroundColor(Color(hexCode: "808080"))
                 }
             }
@@ -78,6 +78,7 @@ struct MainMenuCard: View {
     @EnvironmentObject var userStateManager: UserStateManager
     @State private var showPointView = false
     @State private var showMyShoesView = false
+    @State private var showAvatarView = false
     
     var body: some View {
         HStack(spacing: 0) {
@@ -118,15 +119,20 @@ struct MainMenuCard: View {
             verticalDivider
             
             // 아바타 섹션
-            VStack(spacing: 8) {
-                Image("avata_icon")
-                    .foregroundColor(.black)
-                
-                Text("아바타")
-                    .font(CustomFont.custom(size: 29))
-                    .foregroundColor(.black)
+            Button(action: {
+                showAvatarView = true
+            }) {
+                VStack(spacing: 8) {
+                    Image("avata_icon")
+                        .foregroundColor(.black)
+                    
+                    Text("아바타")
+                        .font(CustomFont.custom(size: 29))
+                        .foregroundColor(.black)
+                }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
+            .buttonStyle(PlainButtonStyle())
         }
         .padding(.vertical, 20)
         .padding(.horizontal, 15)
@@ -137,6 +143,9 @@ struct MainMenuCard: View {
         }
         .fullScreenCover(isPresented: $showMyShoesView) {
             MyShoesView()
+        }
+        .fullScreenCover(isPresented: $showAvatarView) {
+            AvatarManagementView()
         }
     }
 }
@@ -228,7 +237,7 @@ struct LogoutButton: View {
         }) {
             HStack {
                 Image(systemName: "rectangle.portrait.and.arrow.right")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(CustomFont.custom(size: 18))
                     .foregroundColor(.red)
                 
                 Text("로그아웃")

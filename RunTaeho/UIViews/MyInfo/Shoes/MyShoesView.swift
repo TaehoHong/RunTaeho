@@ -38,7 +38,7 @@ struct MyShoesView: View {
                         // 보유 신발 목록
                         VStack(alignment: .leading, spacing: 0) {
                             Text("보유 신발 목록")
-                                .font(.system(size: 18, weight: .semibold))
+                                .font(CustomFont.custom(size: 18))
                                 .padding(.horizontal, 25)
                                 .padding(.top, 43)
                                 .padding(.bottom, 18)
@@ -70,7 +70,7 @@ struct MyShoesView: View {
                                 HStack {
                                     Spacer()
                                     Text("보관 신발 관리")
-                                        .font(.system(size: 18))
+                                        .font(CustomFont.custom(size: 18))
                                         .foregroundColor(.black)
                                     Spacer()
                                 }

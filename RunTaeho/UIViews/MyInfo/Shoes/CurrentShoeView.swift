@@ -13,7 +13,7 @@ struct CurrentShoeView: View {
                     .overlay(
                         Image(systemName: viewModel.imageSystemName)
                             .foregroundColor(.gray)
-                            .font(.system(size: 30))
+                            .font(CustomFont.custom(size: 30))
                     )
                 
                 VStack(alignment: .leading, spacing: 5) {
