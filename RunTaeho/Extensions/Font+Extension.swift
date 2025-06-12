@@ -21,4 +21,4 @@ struct CustomFont {
     static func custom(size: CGFloat) -> Font {
         Font.custom(bmJUA, size: size)
     }
-} 
+}

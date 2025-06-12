@@ -146,7 +146,11 @@ struct AvatarManagementView: View {
                 GridItem(.flexible(), spacing: 15)
             ], spacing: 15) {
                 ForEach(viewModel.filteredItems) { item in
-                    AvatarItemCard(item: item) {
+                    AvatarItemCard(
+                        item: item,
+                        isSelected: viewModel.isItemSelected(item),
+                        showPrice: item.status == .notOwned
+                    ) {
                         viewModel.selectItem(item)
                     }
                 }
@@ -172,19 +176,27 @@ struct AvatarManagementView: View {
                     .background(Color(hexCode: "D9D9D9"))
                     .cornerRadius(5)
             }
+            .disabled(!viewModel.hasChanges)
+            .opacity(viewModel.hasChanges ? 1.0 : 0.6)
             
-            // Confirm Button
+            // Confirm or Purchase Button
             Button(action: {
-                viewModel.confirmChanges()
-                presentationMode.wrappedValue.dismiss()
+                if viewModel.shouldShowPurchaseButton {
+                    viewModel.attemptPurchase()
+                } else {
+                    viewModel.confirmChanges()
+                    presentationMode.wrappedValue.dismiss()
+                }
             }) {
-                Text("확인")
+                Text(viewModel.shouldShowPurchaseButton ? "구매" : "확인")
                     .font(CustomFont.custom(size: 22))
-                    .foregroundColor(.black)
+                    .foregroundColor(viewModel.shouldShowPurchaseButton ? .black : .black)
                     .frame(width: 170, height: 40)
-                    .background(Color(hexCode: "7AE87A"))
+                    .background(viewModel.shouldShowPurchaseButton ? Color(hexCode: "71DCF9") : Color(hexCode: "7AE87A"))
                     .cornerRadius(5)
             }
+            .disabled(!viewModel.hasChanges)
+            .opacity(viewModel.hasChanges ? 1.0 : 0.6)
         }
     }
 }
@@ -210,9 +222,14 @@ struct CategoryTab: View {
 // MARK: - Avatar Item Card
 struct AvatarItemCard: View {
     let item: AvatarItem
+    let isSelected: Bool
+    let showPrice: Bool
     let action: () -> Void
     
     private var borderColor: Color {
+        if isSelected && item.status == .notOwned {
+            return Color(hexCode: "888888")
+        }
         switch item.status {
         case .equipped:
             return Color(hexCode: "7AE87A")
@@ -240,10 +257,10 @@ struct AvatarItemCard: View {
                 ZStack(alignment: .topTrailing) {
                     // Item Image Container
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(borderColor, lineWidth: 2)
-                        .background(
+                        .fill(isSelected && item.status == .notOwned ? Color(hexCode: "888888") : Color(hexCode: "FAFAFA"))
+                        .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(hexCode: "FAFAFA"))
+                                .stroke(borderColor, lineWidth: 2)
                         )
                         .frame(width: 120, height: 120)
                         .overlay(
@@ -263,12 +280,27 @@ struct AvatarItemCard: View {
                             }
                         )
                     
-                    // Lock Icon for not owned items
-                    if item.status == .notOwned {
-                        Image(systemName: "lock.fill")
-                            .font(CustomFont.custom(size: 16))
-                            .foregroundColor(Color(hexCode: "999999"))
-                            .padding(8)
+                    // Price for not owned items when selected
+                    if isSelected && showPrice, let price = item.price {
+                        HStack(spacing: 2) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color(hexCode: "7BE87B"))
+                                    .frame(width: 16, height: 16)
+                                
+                                Text("P")
+                                    .font(CustomFont.custom(size: 9))
+                            }
+                            
+                            Text("\(price)")
+                                .font(CustomFont.custom(size: 14))
+                                .foregroundColor(.black)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.white.opacity(0.9))
+                        .cornerRadius(10)
+                        .padding(8)
                     }
                 }
                 
@@ -336,9 +368,32 @@ struct PurchaseConfirmationPopup: View {
                 }
                 
                 // Message
-                Text("구매하시겠습니까?")
-                    .font(CustomFont.custom(size: 16))
-                    .foregroundColor(Color(hexCode: "666666"))
+                VStack(spacing: 16) {
+                Text("구매 확인")
+                    .font(CustomFont.custom(size: 18))
+                            .foregroundColor(.black)
+                        
+                        VStack(spacing: 8) {
+                            Text("보유 포인트: \(viewModel.avatarState.userPoints)P")
+                                .font(CustomFont.custom(size: 14))
+                                .foregroundColor(Color(hexCode: "4D4D4D"))
+                            
+                            if let price = item.price {
+                                Text("아이템 가격: \(price)P")
+                                    .font(CustomFont.custom(size: 14))
+                                    .foregroundColor(Color(hexCode: "4D4D4D"))
+                                
+                                Rectangle()
+                                    .fill(Color(hexCode: "E6E6E6"))
+                                    .frame(height: 1)
+                                    .padding(.horizontal, 20)
+                                
+                                Text("구매 후 남은 포인트: \(viewModel.avatarState.userPoints - price)P")
+                                    .font(CustomFont.custom(size: 14, weight: .semibold))
+                                    .foregroundColor(Color(hexCode: "009900"))
+                            }
+                        }
+                    }
                 
                 // Buttons
                 HStack(spacing: 20) {
@@ -346,65 +401,38 @@ struct PurchaseConfirmationPopup: View {
                         isPresented = false
                     }) {
                         Text("취소")
-                            .font(CustomFont.custom(size: 20))
-                            .foregroundColor(.black)
-                            .frame(width: 130, height: 48)
-                            .background(Color(hexCode: "D9D9D9"))
-                            .cornerRadius(8)
+                            .font(CustomFont.custom(size: 14, weight: .medium))
+                            .foregroundColor(Color(hexCode: "666666"))
+                            .frame(width: 120, height: 35)
+                            .background(Color(hexCode: "F2F2F2"))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 5)
+                                    .stroke(Color(hexCode: "CCCCCC"), lineWidth: 1)
+                            )
+                            .cornerRadius(5)
                     }
                     
                     Button(action: {
                         onPurchase()
                         isPresented = false
                     }) {
-                        Text("구매")
-                            .font(CustomFont.custom(size: 20))
+                        Text("확인")
+                            .font(CustomFont.custom(size: 14, weight: .medium))
                             .foregroundColor(.white)
-                            .frame(width: 130, height: 48)
-                            .background(Color(hexCode: "7AE87A"))
-                            .cornerRadius(8)
+                            .frame(width: 120, height: 35)
+                            .background(Color(hexCode: "70DBFA"))
+                            .cornerRadius(5)
                     }
                 }
             }
             .padding(24)
             .background(Color.white)
-            .cornerRadius(16)
-            .frame(width: 320)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color(hexCode: "CCCCCC"), lineWidth: 1)
+            )
+            .cornerRadius(8)
+            .frame(width: 300)
         }
-    }
-}
-
-// MARK: - Color Extension for Hex
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (1, 1, 1, 0)
-        }
-        
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue: Double(b) / 255,
-            opacity: Double(a) / 255
-        )
-    }
-}
-
-// MARK: - Preview
-struct AvatarManagementView_Previews: PreviewProvider {
-    static var previews: some View {
-        AvatarManagementView()
     }
 }
