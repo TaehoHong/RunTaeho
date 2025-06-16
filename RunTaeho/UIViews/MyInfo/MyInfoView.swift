@@ -59,7 +59,7 @@ struct ProfileCard: View {
                     .foregroundColor(.black)
                 
                 if let user = userStateManager.currentUser {
-                    Text("러너 Lv.\(user.level) | 포인트: \(user.totalPoints)P")
+                    Text("러너 Lv.\(user.level) | 포인트: \(userStateManager.totalPoint)P")
                         .font(CustomFont.custom(size: 16))
                         .foregroundColor(Color(hexCode: "808080"))
                 }
@@ -88,7 +88,7 @@ struct MainMenuCard: View {
             }) {
                 VStack(spacing: 5) {
                     Image("PointIcon")
-                    Text("\(userStateManager.currentUser?.totalPoints ?? 0)")
+                    Text("\(userStateManager.totalPoint)")
                         .font(CustomFont.custom(size: 29))
                         .foregroundColor(.black)
                 }

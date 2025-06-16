@@ -6,7 +6,7 @@ struct User: Codable {
     var nickname: String
     var userAccounts: [UserAccount]
     var profileImageURL: String?
-    var totalPoints: Int
+    
     var level: Int
     var createdAt: Date
     var lastLoginAt: Date?
@@ -17,12 +17,11 @@ struct User: Codable {
     }
     
     // MARK: - Initialization
-    init(id: Int, nickname: String, userAccounts: [UserAccount] = [], profileImageURL: String? = nil, totalPoints: Int = 0, level: Int = 1, createdAt: Date = Date(), lastLoginAt: Date? = nil) {
+    init(id: Int, nickname: String, userAccounts: [UserAccount] = [], profileImageURL: String? = nil, level: Int = 1, createdAt: Date = Date(), lastLoginAt: Date? = nil) {
         self.id = id
         self.nickname = nickname
         self.userAccounts = userAccounts
         self.profileImageURL = profileImageURL
-        self.totalPoints = totalPoints
         self.level = level
         self.createdAt = createdAt
         self.lastLoginAt = lastLoginAt
@@ -36,12 +35,7 @@ struct User: Codable {
     mutating func updateLastLogin() {
         lastLoginAt = Date()
     }
-    
-    mutating func addPoints(_ points: Int) {
-        totalPoints += points
-        // 레벨 계산 로직 (예: 1000포인트마다 레벨업)
-        level = max(1, totalPoints / 1000 + 1)
-    }
+
     
     mutating func updateProfile(nickname: String? = nil, profileImageURL: String? = nil) {
         if let nickname = nickname {

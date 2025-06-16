@@ -9,10 +9,12 @@ class UserStateManager: ObservableObject {
     
     // MARK: - Published Properties
     @Published var currentUser: User?
+    @Published var totalPoint: Int = 10000
     @Published var isLoggedIn: Bool = false
     @Published var isLoading: Bool = false
     @Published var authToken: String?
     @Published var refreshToken: String?
+    @Published var equippedItems: [AvatarCategory: AvatarItem] = [:]
     
     // MARK: - User Preferences
     @Published var userPreferences: UserPreferences = UserPreferences()
@@ -110,14 +112,12 @@ class UserStateManager: ObservableObject {
     
     // MARK: Point
     func getPoint() -> Int {
-        return currentUser?.totalPoints ?? 0
+        return totalPoint
     }
-    
     /// 포인트 추가
     func addPoints(_ points: Int) {
         guard var user = currentUser else { return }
-        
-        user.addPoints(points)
+        totalPoint += points
         currentUser = user
         saveUserState()
     }

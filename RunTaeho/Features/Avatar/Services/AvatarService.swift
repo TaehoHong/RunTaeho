@@ -3,6 +3,7 @@ import Foundation
 protocol AvatarServiceProtocol {
     func fetchAvatarItems() async throws -> [AvatarItem]
     func equipItem(_ item: AvatarItem) async throws
+    func updateEquippedItems(_ equippedItems: [AvatarCategory: AvatarItem]) async throws
     func purchaseItem(_ item: AvatarItem) async throws -> Bool
     func getUserPoints() async throws -> Int
 }
@@ -89,9 +90,20 @@ class AvatarService: AvatarServiceProtocol {
     
     // MARK: - Equip Item
     func equipItem(_ item: AvatarItem) async throws {
-        // 서버에 아이템 장착 요청
-        // 현재는 로컬에서만 처리
+        // 단일 아이템 착용 (하위 호환성을 위해 유지)
         print("Equipping item: \(item.name)")
+    }
+    
+    // MARK: - Update All Equipped Items
+    func updateEquippedItems(_ equippedItems: [AvatarCategory: AvatarItem]) async throws {
+        // 서버에 전체 착용 상태를 한번에 업데이트
+        print("Updating all equipped items:")
+        for (category, item) in equippedItems {
+            print("  \(category): \(item.name)")
+        }
+        
+        // 실제 서버 API 호출
+        // let response = try await networkService.post("/api/avatar/equip-all", body: equippedItems)
     }
     
     // MARK: - Purchase Item
