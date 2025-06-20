@@ -2,27 +2,24 @@ import Foundation
 
 // MARK: - 인증 제공자 타입
 enum AuthProvider: String, Codable, CaseIterable {
-    case google = "google"
-    case apple = "apple"
+    case GOOGLE = "GOOGLE"
+    case APPLE = "APPLE"
     
     var displayName: String {
         switch self {
-        case .google:
+        case .GOOGLE:
             return "Google"
-        case .apple:
+        case .APPLE:
             return "Apple"
         }
     }
     
     var iconName: String {
         switch self {
-        case .google:
+        case .GOOGLE:
             return "google_icon"
-        case .apple:
+        case .APPLE:
             return "apple.logo"
         }
     }
 }
-
-// MARK: - 인증 제공자 타입 (Strategy Pattern용)
-typealias AuthProviderType = AuthProvider

@@ -48,7 +48,7 @@ struct AccountConnectionComponent_Previews: PreviewProvider {
             // Google 계정 (연결되지 않은 상태)
             AccountConnectionComponent(
                 account: UserAccount(
-                    provider: .google,
+                    provider: .GOOGLE,
                     isConnected: false,
                     connectedAt: nil,
                     email: nil
@@ -59,7 +59,7 @@ struct AccountConnectionComponent_Previews: PreviewProvider {
             // Apple 계정 (연결된 상태)
             AccountConnectionComponent(
                 account: UserAccount(
-                    provider: .apple,
+                    provider: .APPLE,
                     isConnected: true,
                     connectedAt: Date(),
                     email: "user@icloud.com"

@@ -14,7 +14,7 @@ class UserStateManager: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var authToken: String?
     @Published var refreshToken: String?
-    @Published var equippedItems: [AvatarCategory: AvatarItem] = [:]
+    @Published var equippedItems: [ItemType: AvatarItem] = [:]
     
     // MARK: - User Preferences
     @Published var userPreferences: UserPreferences = UserPreferences()
@@ -48,20 +48,32 @@ class UserStateManager: ObservableObject {
     }
     
     // MARK: - Public Methods
-    
     /// 사용자 로그인
-    func login(user: User, authToken: String, refreshToken: String? = nil) {
+    func login(userData: UserDataDto, authToken: String, refreshToken: String? = nil) {
         // 다음 런루프에서 실행하여 뷰 업데이트 사이클 충돌 방지
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             
-            var updatedUser = user
+            var updatedUser = userData.toUser()
             updatedUser.updateLastLogin()
             
             self.currentUser = updatedUser
             self.authToken = authToken
             self.refreshToken = refreshToken
             self.isLoggedIn = true
+            self.totalPoint = userData.totalPoint
+            self.equippedItems = userData.getEquippedItems()
+            
+            // Debug mode logging
+            #if DEBUG
+            print("=== UserStateManager Login Debug Info ===")
+            print("CurrentUser: \(String(describing: self.currentUser))")
+            print("AuthToken: \(String(describing: self.authToken))")
+            print("Point: \(self.totalPoint)")
+            print("EquippedItems: \(self.equippedItems)")
+            print("============================================")
+            #endif
+            
             
             self.saveUserState()
         }

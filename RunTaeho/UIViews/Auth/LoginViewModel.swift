@@ -5,6 +5,7 @@ import Combine
 class LoginViewModel: ObservableObject {
     // MARK: - Single Source of Truth
     private let userStateManager = UserStateManager.shared
+    private let userService = UserService.shared
     private let authContext = AuthenticationContext.shared
     
     // MARK: - Computed Properties (읽기 전용)
@@ -20,7 +21,7 @@ class LoginViewModel: ObservableObject {
     
     init() {
         // 기본적으로 Google 전략 설정
-        authContext.setStrategy(for: .google)
+        authContext.setStrategy(for: .GOOGLE)
         
         // init에서 바로 구독하지 않고 다음 런루프에서 설정
         Task { @MainActor in
@@ -60,29 +61,14 @@ class LoginViewModel: ObservableObject {
             if userAuthData != nil {
                 
                 print("[LoginViewModel] 인증 성공, User 객체 생성 중...")
-                
-                // UserAuthData를 User 모델로 변환
-                let user = User(
-                    id: userAuthData!.id,
-                    nickname: userAuthData!.nickname,
-                    userAccounts: [
-                        UserAccount(
-                            id: 1,
-                            provider: provider,
-                            isConnected: true,
-                            connectedAt: Date(),
-                            email: userAuthData!.email
-                        )
-                    ],
-                    profileImageURL: userAuthData!.profileImageURL
-                )
-                
+                let userDataDto = try await userService.getUserDatadto(accessToken: userAuthData!.accessToken)
+            
                 print("[LoginViewModel] UserStateManager.login 호출 전")
                 
                 // 메인 큐에서 비동기로 실행
                 await MainActor.run {
                     userStateManager.login(
-                        user: user,
+                        userData: userDataDto,
                         authToken: userAuthData!.accessToken,
                         refreshToken: userAuthData!.refreshToken
                     )
@@ -104,31 +90,36 @@ class LoginViewModel: ObservableObject {
     func signInDebugg() {
         Task {
             // 테스트용 사용자 데이터 생성
-            let debugUser = User(
+            let debugUser = UserDataDto(
                 id: 1234,
-                nickname: "테스트 사용자",
+                name: "테스트 사용자",
+                authorityType: "USER",
+                totalPoint: 10000,
                 userAccounts: [
-                    UserAccount(
+                    UserAccountDataDto(
                         id: 1,
-                        provider: .google,
-                        isConnected: true,
-                        connectedAt: Date(),
-                        email: "debug@gmail.com"
+                        email: "debug@gmail.com",
+                        accountType: .GOOGLE
                     ),
-                    UserAccount(
+                    UserAccountDataDto(
                         id: 2,
-                        provider: .apple,
-                        isConnected: false,
-                        connectedAt: Date(),
-                        email: "debug@icloud.com"
+                        email: "debug@icloud.com",
+                        accountType: .APPLE
                     )
                 ],
-                profileImageURL: nil,
+                equippedItems: [
+                    EquippedItemDataDto(
+                        id: 1,
+                        name: "테스트 무기",
+                        itemTypeId: 1,
+                        filePath: "/file/path"
+                    )
+                ]
             )
             
             // UserStateManager를 통해 로그인 처리
             userStateManager.login(
-                user: debugUser,
+                userData: debugUser,
                 authToken: "debug_access_token",
                 refreshToken: "debug_refresh_token"
             )
@@ -136,7 +127,7 @@ class LoginViewModel: ObservableObject {
     }
     
     /// 사용 가능한 인증 제공자 목록 가져오기
-    func getAvailableProviders() -> [AuthProviderType] {
+    func getAvailableProviders() -> [AuthProvider] {
         return authContext.getAvailableProviders()
     }
     

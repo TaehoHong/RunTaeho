@@ -6,9 +6,9 @@ class AuthenticationStrategyFactory {
     // MARK: - Static Methods
     static func createStrategy(for provider: AuthProvider) -> AuthenticationStrategy? {
         switch provider {
-        case .google:
+        case .GOOGLE:
             return GoogleAuthenticationStrategy()
-        case .apple:
+        case .APPLE:
             return AppleAuthenticationStrategy()
         }
     }
@@ -117,7 +117,7 @@ class AuthenticationContext: ObservableObject {
     }
     
     /// 사용 가능한 인증 제공자 목록
-    func getAvailableProviders() -> [AuthProviderType] {
+    func getAvailableProviders() -> [AuthProvider] {
         return AuthenticationStrategyFactory.getAvailableProviders()
     }
 }

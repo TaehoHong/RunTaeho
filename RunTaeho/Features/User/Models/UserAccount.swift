@@ -8,13 +8,14 @@ struct UserAccount: Codable, Identifiable {
     let connectedAt: Date?
     let email: String?
     
-    init(id: Int = 0, provider: AuthProvider, isConnected: Bool = true, connectedAt: Date? = Date(), email: String? = nil) {
+    init(id: Int = 0, provider: AuthProvider, isConnected: Bool = false, connectedAt: Date? = nil, email: String? = nil) {
         self.id = id
         self.provider = provider
         self.isConnected = isConnected
         self.connectedAt = connectedAt
         self.email = email
     }
+    
     
     func disconnect() -> UserAccount {
         UserAccount(

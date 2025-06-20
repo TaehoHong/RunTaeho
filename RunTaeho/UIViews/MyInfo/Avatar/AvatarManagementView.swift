@@ -99,8 +99,8 @@ struct AvatarManagementView: View {
                         Text("선택된 아이템:")
                             .font(CustomFont.custom(size: 12))
                             .foregroundColor(Color(hexCode: "666666"))
-                        ForEach(Array(viewModel.currentPreviewItems.values), id: \.id) { item in
-                            Text("\(item.category.displayName): \(item.name)")
+                        ForEach(Array(viewModel.currentPreviewItems.values)) { item in
+                            Text("\(item.itemType.displayName): \(item.name)")
                                 .font(CustomFont.custom(size: 10))
                                 .foregroundColor(Color(hexCode: "999999"))
                         }
@@ -253,18 +253,11 @@ struct AvatarItemCard: View {
                         .frame(width: 120, height: 120)
                         .overlay(
                             Group {
-                                if let imageName = item.imageName {
-                                    Image(imageName)
-                                        .resizable()
-                                        .scaledToFit()
-                                        .padding(10)
-                                        .opacity(item.status == .notOwned ? 0.5 : 1.0)
-                                } else {
-                                    Image(systemName: "photo")
-                                        .font(CustomFont.custom(size: 40))
-                                        .foregroundColor(Color(hexCode: "CCCCCC"))
-                                        .opacity(item.status == .notOwned ? 0.5 : 1.0)
-                                }
+                                Image(systemName: "photo")
+//                                Image(item.name)
+                                    .font(CustomFont.custom(size: 40))
+                                    .foregroundColor(Color(hexCode: "CCCCCC"))
+                                    .opacity(item.status == .notOwned ? 0.5 : 1.0)
                             }
                         )
                     

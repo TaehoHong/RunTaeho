@@ -9,7 +9,7 @@ class AuthenticationService {
         
         return try await withCheckedThrowingContinuation { continuation in
             HTTPClient.shared.get(
-                url: URL.makeForStringEndpoint("api/v1/oauth/google"),
+                urlPath: "api/v1/oauth/google",
                 requestParam: RequestParam(params: ["code": code]),
                 responseType: TokenDto.self
             ) { result in

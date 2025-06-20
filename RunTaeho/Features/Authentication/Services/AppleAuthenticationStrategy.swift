@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - Apple 인증 전략
 class AppleAuthenticationStrategy: NSObject, AuthenticationStrategy {
-    let authProvider = AuthProvider.apple
+    let authProvider = AuthProvider.GOOGLE
     
     // MARK: - Private Properties
     private var currentContinuation: CheckedContinuation<UserAuthData, Error>?

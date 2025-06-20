@@ -2,10 +2,9 @@ import Foundation
 
 // MARK: - Avatar Item ViewModel
 struct AvatarItemViewModel: Identifiable {
-    let id: String
+    let id: Int
     let name: String
     let categoryName: String
-    let imageName: String?
     let isEquipped: Bool
     let isOwned: Bool
     let price: Int?
@@ -14,10 +13,9 @@ struct AvatarItemViewModel: Identifiable {
     init(from item: AvatarItem) {
         self.id = item.id
         self.name = item.name
-        self.categoryName = item.category.displayName
-        self.imageName = item.imageName
-        self.isEquipped = item.status == .equipped
-        self.isOwned = item.status == .owned || item.status == .equipped
+        self.categoryName = item.itemType.displayName
+        self.isEquipped = item.status == .EQUIPPED
+        self.isOwned = item.status == .OWNED || item.status == .EQUIPPED
         self.price = item.price
     }
     
@@ -44,27 +42,25 @@ enum ItemStatusViewModel {
 struct CategoryViewModel: Identifiable {
     let id = UUID()
     let name: String
-    let category: AvatarCategory
+    let itemType: ItemType
     
-    init(category: AvatarCategory) {
-        self.name = category.displayName
-        self.category = category
+    init(itemType: ItemType) {
+        self.name = itemType.displayName
+        self.itemType = itemType
     }
 }
 
 // MARK: - Purchase Item ViewModel
 struct PurchaseItemViewModel: Identifiable {
-    let id: String
+    let id: Int
     let name: String
     let categoryName: String
-    let imageName: String?
     let price: Int
     
     init(from item: AvatarItemViewModel) {
         self.id = item.id
         self.name = item.name
         self.categoryName = item.categoryName
-        self.imageName = item.imageName
         self.price = item.price ?? 0
     }
 }

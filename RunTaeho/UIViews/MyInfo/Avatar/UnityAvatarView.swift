@@ -3,7 +3,7 @@ import UIKit
 
 // MARK: - Unity Avatar View
 struct UnityAvatarView: UIViewControllerRepresentable {
-    let equippedItems: [AvatarCategory: AvatarItem]
+    let equippedItems: [ItemType: AvatarItem]
     
     func makeUIViewController(context: Context) -> UnityAvatarViewController {
         let controller = UnityAvatarViewController()
@@ -31,16 +31,16 @@ class UnityAvatarViewController: UIViewController {
         view.backgroundColor = .systemGray6
     }
     
-    func updateEquippedItems(_ items: [AvatarCategory: AvatarItem]) {
+    func updateEquippedItems(_ items: [ItemType: AvatarItem]) {
         // Unity로 착용 아이템 정보 전달
-        var itemData: [String: String] = [:]
-        
-        for (category, item) in items {
-            itemData[category.rawValue] = item.id
-        }
-        
-        // Unity 메시지 전송
-        sendMessageToUnity(method: "UpdateAvatarItems", data: itemData)
+//        var itemData: [Int: Int] = [:]
+//        
+//        for (category, item) in items {
+//            itemData[category.rawValue] = item.id
+//        }
+//        
+//        // Unity 메시지 전송
+//        sendMessageToUnity(method: "UpdateAvatarItems", data: itemData)
     }
     
     private func sendMessageToUnity(method: String, data: [String: String]) {

@@ -12,14 +12,14 @@ struct LoginView: View {
                     scheme: .light,
                     style: .wide,
                     action: {
-                        viewModel.signIn(with: .google)
+                        viewModel.signIn(with: .GOOGLE)
                     })
                 .frame(width: 240, height: 38, alignment: .center)
 
                 Button(action: {
                     print("[LoginView] Apple/Debug 버튼 클릭")
                     viewModel.signInDebugg()
-//                    viewModel.signIn(with: .apple)
+//                    viewModel.signIn(with: .APPLE)
                 }) {
                     Image("appleid_button")
                         .resizable()

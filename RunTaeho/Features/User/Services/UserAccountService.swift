@@ -11,13 +11,13 @@ class UserAccountService {
         // TODO: 실제 API 호출로 대체
         return [
             UserAccount(
-                provider: .google,
+                provider: .GOOGLE,
                 isConnected: false,
                 connectedAt: nil,
                 email: nil
             ),
             UserAccount(
-                provider: .apple,
+                provider: .APPLE,
                 isConnected: true,
                 connectedAt: Date(),
                 email: "user@icloud.com"

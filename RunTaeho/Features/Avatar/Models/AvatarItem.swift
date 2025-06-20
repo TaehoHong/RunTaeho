@@ -2,36 +2,43 @@ import Foundation
 
 // MARK: - Avatar Item Model
 struct AvatarItem: Identifiable, Equatable {
-    let id: String
+    let id: Int
     let name: String
-    let category: AvatarCategory
-    let imageURL: String?
-    let imageName: String?
+    let itemType: ItemType
+    let filePath: String?
     var status: ItemStatus
     let price: Int?
-    
-    enum ItemStatus {
-        case equipped   // 착용중
-        case owned      // 보유
-        case notOwned   // 미보유
-    }
+}
+
+enum ItemStatus {
+    case EQUIPPED   // 착용중
+    case OWNED      // 보유
+    case NOT_OWNED   // 미보유
 }
 
 // MARK: - Avatar Category
-enum AvatarCategory: String, CaseIterable {
-    case hair = "머리"
-    case clothes = "의상"
-    case shoes = "신발"
+enum ItemType: Int, CaseIterable {
+    case HAIR = 1
+    case CLOTH = 2
+    case PANTS = 3
     
     var displayName: String {
-        return self.rawValue
+        switch self{
+        case .HAIR: return "머리"
+        case .CLOTH: return "의상"
+        case .PANTS: return "바지"
+        }
+    }
+    
+    static func getItemType(_ val:Int) -> ItemType {
+        return ItemType(rawValue: val)!
     }
 }
 
 // MARK: - Avatar State
 struct AvatarState {
-    var selectedCategory: AvatarCategory = .hair
-    var equippedItems: [AvatarCategory: AvatarItem] = [:]
+    var selectedCategory: ItemType = .HAIR
+    var equippedItems: [ItemType: AvatarItem] = [:]
     var allItems: [AvatarItem] = []
     var userPoints: Int = 10000
 }

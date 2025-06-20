@@ -5,7 +5,7 @@ import UIKit
 // MARK: - Google 인증 전략
 class GoogleAuthenticationStrategy: AuthenticationStrategy {
     
-    let authProvider = AuthProvider.google
+    let authProvider = AuthProvider.GOOGLE
     
     // MARK: - Private Properties
     private let gidSignInInstance = GIDSignIn.sharedInstance

@@ -3,7 +3,7 @@ import Foundation
 protocol AvatarServiceProtocol {
     func fetchAvatarItems() async throws -> [AvatarItem]
     func equipItem(_ item: AvatarItem) async throws
-    func updateEquippedItems(_ equippedItems: [AvatarCategory: AvatarItem]) async throws
+    func updateEquippedItems(_ equippedItems: [ItemType: AvatarItem]) async throws
     func purchaseItem(_ item: AvatarItem) async throws -> Bool
     func getUserPoints() async throws -> Int
 }
@@ -19,70 +19,63 @@ class AvatarService: AvatarServiceProtocol {
         return [
             // Hair items
             AvatarItem(
-                id: "hair_001",
+                id: 1,
                 name: "기본 헤어",
-                category: .hair,
-                imageURL: nil,
-                imageName: "Hair_1",
-                status: .equipped,
+                itemType: .HAIR,
+                filePath: nil,
+                status: .EQUIPPED,
                 price: nil
             ),
             AvatarItem(
-                id: "hair_002",
+                id: 2,
                 name: "스포츠 헤어",
-                category: .hair,
-                imageURL: nil,
-                imageName: "Hair_2",
-                status: .notOwned,
+                itemType: .HAIR,
+                filePath: nil,
+                status: .NOT_OWNED,
                 price: 500
             ),
             AvatarItem(
-                id: "hair_003",
+                id: 3,
                 name: "더벅머리",
-                category: .hair,
-                imageURL: nil,
-                imageName: "Hair_4",
-                status: .owned,
+                itemType: .HAIR,
+                filePath: nil,
+                status: .OWNED,
                 price: nil
             ),
             
             // Clothes items
             AvatarItem(
-                id: "clothes_001",
+                id: 4,
                 name: "기본 티셔츠",
-                category: .clothes,
-                imageURL: nil,
-                imageName: "Clothes_1",
-                status: .equipped,
+                itemType: .CLOTH,
+                filePath: nil,
+                status: .EQUIPPED,
                 price: nil
             ),
             AvatarItem(
-                id: "clothes_002",
+                id: 5,
                 name: "운동복",
-                category: .clothes,
-                imageURL: nil,
-                imageName: "Clothes_2",
-                status: .owned,
+                itemType: .CLOTH,
+                filePath: nil,
+                status: .OWNED,
                 price: nil
             ),
             
             // Shoes items
             AvatarItem(
-                id: "shoes_001",
+                id: 6,
                 name: "기본 운동화",
-                category: .shoes,
-                imageURL: nil,
-                imageName: "Shoes_1",
-                status: .equipped,
+                itemType: .PANTS,
+                filePath: nil,
+                status: .EQUIPPED,
                 price: nil
             ),
             AvatarItem(
-                id: "shoes_002",
+                id: 7,
                 name: "러닝화",
-                category: .shoes,
-                imageURL: nil,
-                imageName: "Shoes_2",
-                status: .notOwned,
+                itemType: .PANTS,
+                filePath: nil,
+                status: .NOT_OWNED,
                 price: 800
             )
         ]
@@ -95,7 +88,7 @@ class AvatarService: AvatarServiceProtocol {
     }
     
     // MARK: - Update All Equipped Items
-    func updateEquippedItems(_ equippedItems: [AvatarCategory: AvatarItem]) async throws {
+    func updateEquippedItems(_ equippedItems: [ItemType: AvatarItem]) async throws {
         // 서버에 전체 착용 상태를 한번에 업데이트
         print("Updating all equipped items:")
         for (category, item) in equippedItems {
