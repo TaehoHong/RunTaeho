@@ -15,8 +15,9 @@ class RunningChartViewModel: ObservableObject {
 
     // 차트 관련 계산 속성
     var maxChartDistance: Double {
-        let maxDistance = chartData.map { $0.distance }.max() ?? 0
-        return maxDistance
+//        chartData.forEach { print("date: \($0.date), distance: \($0.distanceKm)") }
+
+        return chartData.map { $0.distanceKm }.max() ?? 0
     }
 
     var periodHeaderTitle: String {

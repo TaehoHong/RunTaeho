@@ -11,7 +11,7 @@ struct StatisticsSummaryView: View {
             HStack {
                 Text("총 거리")
                 Spacer()
-                Text(String(format: "%.1fkm", viewModel.statistics.totalDistance))
+                Text(String(format: "%.2fkm", viewModel.statistics.totalDistance))
             }
             
             HStack {

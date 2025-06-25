@@ -6,12 +6,14 @@ struct RunningRecordListView: View {
     var body: some View {
         return ScrollView {
             LazyVStack(spacing: 10) {
-                ForEach(viewModel.records.sorted(by: { $0.date > $1.date })) { record in
+                let sortedRecords = viewModel.records.sorted(by: { $0.startTimestamp > $1.startTimestamp })
+                ForEach(Array(sortedRecords.enumerated()), id: \.element.id) { index, record in
                     RunningRecordRow(record: record)
                         .onAppear {
-                            if record.id == viewModel.records.last?.id {
+                            // 정렬된 리스트의 마지막 아이템이고, 로딩 중이 아닐 때만 더 로드
+                            if viewModel.hasNextData {
                                 Task {
-                                    try await viewModel.loadMoreRecords()
+                                    await viewModel.loadMoreRecords()
                                 }
                             }
                         }

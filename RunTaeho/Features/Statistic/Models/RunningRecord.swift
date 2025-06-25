@@ -1,9 +1,8 @@
 import Foundation
 
-struct RunningRecord: Identifiable {
-    let id: Int64
-    let date: Date
+struct RunningRecord: Identifiable, Codable {
+    let id: Int
     let distance: Double
-    let pace: TimeInterval
-    let duration: TimeInterval
+    let durationSec: TimeInterval
+    let startTimestamp: TimeInterval
 }

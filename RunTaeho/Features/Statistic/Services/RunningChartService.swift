@@ -27,7 +27,7 @@ class RunningChartService {
             calendarComponenet = Calendar.Component.month
         }
 
-        return records.filter { calendar.isDate($0.date, equalTo: startDate, toGranularity: calendarComponenet) }
+        return records.filter { calendar.isDate(Date(timeIntervalSince1970: $0.startTimestamp), equalTo: startDate, toGranularity: calendarComponenet) }
     }
 
     // 그래프 데이터 생성
@@ -56,7 +56,9 @@ class RunningChartService {
             calendarComponenet = Calendar.Component.month
         }
 
-        let records = rowRecords.filter { calendar.isDate($0.date, equalTo: startDate, toGranularity: calendarComponenet) }
+        let records = rowRecords.filter { calendar.isDate(Date(timeIntervalSince1970: $0.startTimestamp), equalTo: startDate, toGranularity: calendarComponenet) }
+        print("rowRecords: \(rowRecords)")
+        print("records: \(records)")
 
         chartData = range.map { day in
             let date = calendar.date(byAdding: getGranularity(period: period), value: day, to: startDate)!
@@ -64,12 +66,24 @@ class RunningChartService {
             : calendar.startOfDay(for: date)
             
 
-            let distance = records.filter {
-                calendar.isDate($0.date, equalTo: normalizedDate, toGranularity: getGranularity(period: period))
-            }.reduce(0){ $0 + $1.distance }
+            let filteredRecords = records.filter {
+                calendar.isDate(Date(timeIntervalSince1970: $0.startTimestamp), equalTo: normalizedDate, toGranularity: getGranularity(period: period))
+            }
+            
+            // filter를 통과한 값이 1개 이상일 때 로깅
+            if filteredRecords.count >= 1 {
+                print("Filtered records count: \(filteredRecords.count)")
+                for record in filteredRecords {
+                    let recordDate = Date(timeIntervalSince1970: record.startTimestamp)
+                    print("Record - timestamp: \(record.startTimestamp), Date: \(recordDate), Distance: \(record.distance)")
+                }
+            }
+            
+            let distance = filteredRecords.reduce(0){ $0 + $1.distance }
 
             return RunningChartData(date: normalizedDate, distance: distance)
         }
+        
 //        print("chartData: \(chartData)")
         return chartData
     }
@@ -146,8 +160,8 @@ class RunningChartService {
 
     // 통계 계산
     func calculateStatistics(from records: [RunningRecord]) -> (runCount: Int, totalDistance: Double, totalDuration: TimeInterval) {
-        let totalDistance = records.reduce(0) { $0 + $1.distance }
-        let totalDuration = records.reduce(0) { $0 + $1.duration }
+        let totalDistance = records.reduce(0) { $0 + $1.distance } / 1000.0
+        let totalDuration = records.reduce(0) { $0 + $1.durationSec }
         return (records.count, totalDistance, totalDuration)
     }
 
@@ -162,7 +176,7 @@ class RunningChartService {
 
     private func getCalendar() -> Calendar {
         var calendar = Calendar.current
-        calendar.timeZone = TimeZone(identifier: TimeZone.current.identifier)!
+        calendar.timeZone = TimeZone(identifier: TimeZone.gmt.identifier)!
         calendar.firstWeekday = 2  // 월요일을 1주의 첫날로 설정
         return calendar
     }

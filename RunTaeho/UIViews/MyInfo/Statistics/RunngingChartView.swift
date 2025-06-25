@@ -48,7 +48,7 @@ struct RunningChartView: View {
             ForEach(viewModel.chartData) { data in
                 BarMark(
                     x: .value("Date", data.date),// unit: viewModel.getDateUnit()),
-                    y: .value("Distance", data.distance),
+                    y: .value("Distance", data.distanceKm),
                     width: viewModel.period == .month ? 5 : 10
                 )
                 .cornerRadius(4)
@@ -66,7 +66,6 @@ struct RunningChartView: View {
                 if let date = value.as(Date.self) {
                     AxisValueLabel(centered: false) {
                         let text = viewModel.formatXAxisLabel(for: date)
-                        let _ = print("text: \(text), date : \(date)")
                         Text(text)
                             .font(CustomFont.custom(size: 10))
                     }
@@ -79,6 +78,7 @@ struct RunningChartView: View {
         .chartYAxis {
             // Y축 사전 계산
             let maxValue = viewModel.maxChartDistance + 3
+            let _ = print("maxValue: \(maxValue)")
             let strideValue = maxValue / 5
 
             // Y축 라벨 5개로 설정

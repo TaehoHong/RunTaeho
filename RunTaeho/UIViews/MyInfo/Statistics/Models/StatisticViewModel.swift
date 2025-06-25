@@ -8,6 +8,8 @@ class StatisticViewModel: ObservableObject {
     private let statisticsService: RunningChartService
     private var startDate = Date().startOfMonth()
     
+    var hasNextData: Bool = false
+    
     @Published var chartViewModel: RunningChartViewModel
     
 
@@ -41,7 +43,7 @@ class StatisticViewModel: ObservableObject {
     }
     @Published var isLoading = false
     @Published var error: Error?
-    var cursor: Int64 = 0
+    var cursor: Int? = nil
 
     
     // 초기화
@@ -80,15 +82,21 @@ class StatisticViewModel: ObservableObject {
         do {
             let runningRecordPage = try await runningRecordService.loadRuningRecords(startDate: startDate, endDate: endDate ?? Date())
 
-            self.records.append(contentsOf: runningRecordPage.data)
+            self.records.append(contentsOf: runningRecordPage.content)
             self.isLoading = false
             self.cursor = runningRecordPage.cursor
+            self.hasNextData = runningRecordPage.hasNext
+            
+            #if DEBUG
+            print("loadRuningRecords records count: \(runningRecordPage.content)")
+            #endif
+            
         } catch {
             self.error = error
             print("Error loading initial records: \(error)")
         }
         
-        self.records.sort{ x,y in x.date > y.date}
+        self.records.sort{ x,y in x.startTimestamp > y.startTimestamp}
     }
 
 
@@ -99,15 +107,19 @@ class StatisticViewModel: ObservableObject {
         isLoading = true
         do {
             let newRecords = try await self.runningRecordService.loadMoreRecords(cursor: self.cursor, size: 30)
-            self.records.append(contentsOf: newRecords.data)
+            self.records.append(contentsOf: newRecords.content)
             self.cursor = newRecords.cursor
             self.isLoading = false
+            
+            #if DEBUG
+            print("loadMoreRecords newRecords: \(records.count)")
+            #endif
             
         } catch {
             self.error = error
             print("Error loading initial records: \(error)")
         }
         
-        self.records.sort{ x,y in x.date > y.date}
+        self.records.sort{ x,y in x.startTimestamp > y.startTimestamp}
     }
 }
