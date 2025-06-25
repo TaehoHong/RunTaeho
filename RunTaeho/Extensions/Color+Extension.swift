@@ -25,4 +25,8 @@ extension Color {
             opacity: Double(a) / 255
         )
     }
+    
+    init() {
+        self.init(hexCode: "7BE87B")
+    }
 }

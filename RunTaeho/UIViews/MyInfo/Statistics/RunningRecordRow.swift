@@ -16,10 +16,15 @@ struct RunningRecordRow: View {
             
             HStack {
                 Text(viewModel.formattedDistance)
+                    .font(CustomFont.custom(size: 20))
                 Spacer()
+                
                 Text(viewModel.formattedPace)
+                    .font(CustomFont.custom(size: 20))
                 Spacer()
+                
                 Text(viewModel.formattedDuration)
+                    .font(CustomFont.custom(size: 20))
             }
         }
         .padding()

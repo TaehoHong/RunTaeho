@@ -4,6 +4,7 @@ import Charts
 
 struct RunningChartView: View {
 
+    private let chartHight: CGFloat = 200
     @ObservedObject var viewModel: RunningChartViewModel
 
     var body: some View {
@@ -28,7 +29,7 @@ struct RunningChartView: View {
                     }
                     .padding(.top)
                 }
-                .frame(height: 250)
+                .frame(height: chartHight)
             } else {
                 chartContent
             }
@@ -52,7 +53,7 @@ struct RunningChartView: View {
                     width: viewModel.period == .month ? 5 : 10
                 )
                 .cornerRadius(4)
-                .foregroundStyle(Color.blue.gradient)
+                .foregroundStyle(Color())
             }
         }
         .chartYScale(domain: 0...maxYValue)
@@ -93,6 +94,6 @@ struct RunningChartView: View {
             }
         }
         .padding(.horizontal)  // 차트 좌우 여백 추가
-        .frame(height: 250)  // 차트 높이 지정
+        .frame(height: chartHight)  // 차트 높이 지정
     }
 }

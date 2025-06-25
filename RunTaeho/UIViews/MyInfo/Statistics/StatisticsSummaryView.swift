@@ -4,24 +4,27 @@ struct StatisticsSummaryView: View {
     @ObservedObject var viewModel: StatisticViewModel
     
     var body: some View {
-        VStack(spacing: 10) {
+        HStack(spacing: 10) {
             Text("\(viewModel.statistics.runCount) 러닝")
-                .font(.headline)
+                .font(CustomFont.custom(size: 20))
+            Spacer()
             
-            HStack {
+            VStack(spacing: 10) {
                 Text("총 거리")
-                Spacer()
+                    .font(CustomFont.custom(size: 20))
                 Text(String(format: "%.2fkm", viewModel.statistics.totalDistance))
+                    .font(CustomFont.custom(size: 20))
             }
-            
-            HStack {
+            Spacer()
+            VStack {
                 Text("총 시간")
-                Spacer()
+                    .font(CustomFont.custom(size: 20))
                 Text(formatDuration(viewModel.statistics.totalDuration))
+                    .font(CustomFont.custom(size: 20))
             }
         }
         .padding()
-        .background(Color.gray.opacity(0.1))
+        .background(Color.white.opacity(0.1))
         .cornerRadius(10)
     }
     
