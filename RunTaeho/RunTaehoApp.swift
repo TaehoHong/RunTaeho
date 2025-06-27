@@ -16,7 +16,7 @@ struct RunTaehoApp: App {
         WindowGroup {
             ZStack {
                 Color.gray.ignoresSafeArea()
-                
+//                LoadingView()
                 // 로그인 상태에 따른 화면 분기
                 if userStateManager.isLoggedIn {
                     MainTabView()

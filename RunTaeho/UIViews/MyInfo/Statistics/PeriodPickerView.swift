@@ -16,6 +16,8 @@ struct PeriodPickerView: View {
                         .background(viewModel.selectedPeriod == period ? Color.green.opacity(0.3) : Color.gray.opacity(0.2))
                 }
             }
-        }.safeAreaPadding()
+        }
+        .padding(.init(top: 1, leading: 1, bottom: 1, trailing: 1))
+        .cornerRadius(8)
     }
 }

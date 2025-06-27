@@ -2,17 +2,17 @@ import SwiftUI
 
 // 포인트 내역 행
 struct PointHistoryRow: View {
-    let item: PointHistoryItem
+    let viewModel: PointHistoryViewModel
     
     var body: some View {
         HStack {
             // 내역 정보
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.title)
+                Text(viewModel.title)
                     .font(CustomFont.custom(size: 18))
                     .foregroundColor(Color(hexCode: "1a1a1a"))
                 
-                Text(item.date)
+                Text(viewModel.formattedDate)
                     .font(CustomFont.custom(size: 14))
                     .foregroundColor(Color(hexCode: "808080"))
             }
@@ -20,10 +20,10 @@ struct PointHistoryRow: View {
             Spacer()
             
             // 포인트 변동 금액
-            Text(item.formattedAmount)
+            Text(viewModel.formattedPoint)
                 .font(CustomFont.custom(size: 20))
                 .fontWeight(.bold)
-                .foregroundColor(item.isPositive ? 
+                .foregroundColor(viewModel.isPositive ?
                     Color(hexCode: "339933") : Color(hexCode: "cc3333"))
         }
         .padding(.horizontal, 20)

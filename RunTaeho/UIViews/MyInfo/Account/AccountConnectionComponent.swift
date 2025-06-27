@@ -41,34 +41,3 @@ struct AccountConnectionComponent: View {
     }
 }
 
-// MARK: - 계정 연결 컴포넌트 프리뷰
-struct AccountConnectionComponent_Previews: PreviewProvider {
-    static var previews: some View {
-        VStack(spacing: 20) {
-            // Google 계정 (연결되지 않은 상태)
-            AccountConnectionComponent(
-                account: UserAccount(
-                    provider: .GOOGLE,
-                    isConnected: false,
-                    connectedAt: nil,
-                    email: nil
-                ),
-                onToggleConnection: { _ in }
-            )
-            
-            // Apple 계정 (연결된 상태)
-            AccountConnectionComponent(
-                account: UserAccount(
-                    provider: .APPLE,
-                    isConnected: true,
-                    connectedAt: Date(),
-                    email: "user@icloud.com"
-                ),
-                onToggleConnection: { _ in }
-            )
-        }
-        .padding()
-        .background(Color.gray.opacity(0.1))
-        .previewLayout(.sizeThatFits)
-    }
-}
