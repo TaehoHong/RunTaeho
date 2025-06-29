@@ -1,15 +1,9 @@
-//
-//  RunningRecord.swift
-//  RunTaeho
-//
-//  Created by Hong Taeho on 6/29/25.
-//
-
 import Foundation
 
 struct RunningRecord: Identifiable, Codable {
     let id: Int
     let distance: Double
+    let cadence: Int
     let durationSec: TimeInterval
     let startTimestamp: TimeInterval
 }

@@ -7,45 +7,52 @@ class ShoeApiService {
     
     private init() {}
     
-    func fetchShoes() async throws -> CursorResult<Shoe> {
-        return try await fetchShoesCursor(cursor: nil, size: 100)
-    }
-    
-    private func fetchShoesCursor(cursor: Int? = nil, size: Int = 10) async throws -> CursorResult<Shoe> {
+    func fetchShoesCursor(cursor: Int? = nil, size: Int = 10) async throws -> CursorResult<Shoe> {
         
-        var params: [String: String] = ["size": "10"]
+        var params: [String: String] = ["size": String(size)]
         if let cursor = cursor {
             params["cursor"] = String(cursor)
         }
         
-         return try await httpClient.get(
-             urlPath: GET_SHOE,
-             headers: ["Authorization": "Bearer \(userStateManager.authToken!)"],
-             requestParam: RequestParam(params: params),
-             responseType: CursorResult<Shoe>.self
-         )
+        guard let authToken = userStateManager.authToken else {
+            throw NetworkError.unauthorized
+        }
+        
+        return try await httpClient.get(
+            urlPath: APIPath.Shoe.list,
+            headers: ["Authorization": "Bearer \(authToken)"],
+            requestParam: RequestParam(params: params),
+            responseType: CursorResult<Shoe>.self
+        )
     }
     
     func addShoe(_ addShoeDto: AddShoeDto) async throws -> Shoe {
-         let response = try await httpClient.post(
-             urlPath: CREATE_SHOE,
-             body: addShoeDto,
-             headers: ["Authorization": "Bearer \(userStateManager.authToken!)"],
-             responseType: Shoe.self
-         )
-         return response
+        guard let authToken = userStateManager.authToken else {
+            throw NetworkError.unauthorized
+        }
+        
+        let response = try await httpClient.post(
+            urlPath: APIPath.Shoe.create,
+            body: addShoeDto,
+            headers: ["Authorization": "Bearer \(authToken)"],
+            responseType: Shoe.self
+        )
+        return response
     }
     
-    func updateShoe(_ shoe: Shoe) async throws -> Shoe {
-        // TODO: API 구현
-        // let response = try await httpClient.request(
-        //     path: "\(APIPath.shoes.rawValue)/\(shoe.id)",
-        //     method: .PUT,
-        //     body: shoe,
-        //     responseType: Shoe.self
-        // )
-        // return response
+    func patchShoe(_ shoe: PatchShoeDto) async throws -> Shoe {
         
-        return shoe
+        guard let authToken = userStateManager.authToken else {
+            throw NetworkError.unauthorized
+        }
+        
+        let response = try await httpClient.patch(
+            urlPath: APIPath.Shoe.patch(shoe.id),
+            body: shoe,
+            headers: ["Authorization": "Bearer \(authToken)"],
+            responseType: Shoe.self
+        )
+        return response
     }
+    
 }

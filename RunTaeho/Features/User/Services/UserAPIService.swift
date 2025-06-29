@@ -10,7 +10,7 @@ class UserAPIService {
 
     func getUserById(userId: Int, accessToken: String) async throws -> User {
 
-        let urlString = GET_USER + "\(userId)"
+        let urlString = APIPath.User.base + "/\(userId)"
 
         return try await withCheckedThrowingContinuation { continuation in
             httpClient.get(
@@ -33,7 +33,7 @@ class UserAPIService {
     func getUserDataDto(_ accessToken: String) async throws -> UserDataDto {
         return try await withCheckedThrowingContinuation { continuation in
             httpClient.get(
-                urlPath: GET_MY_DATA,
+                urlPath: APIPath.User.me,
                 headers: ["Authorization": "Bearer \(accessToken)"],
                 responseType: UserDataDto.self
             ) { result in

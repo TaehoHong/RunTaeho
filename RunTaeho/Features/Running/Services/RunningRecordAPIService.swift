@@ -19,7 +19,7 @@ class RunningRecordAPIService: RunningRecordAPIProtocol {
         
         return try await withCheckedThrowingContinuation { continuation in
             httpClient.get(
-                urlPath: SEARCH_RUNNING_RECORDS,
+                urlPath: APIPath.RunningRecord.search,
                 headers: headers,
                 requestParam: makeRequestParam(cursor: cursor, size: size, startDate: startDate, endDate: endDate),
                 responseType: CursorResult<RunningRecord>.self

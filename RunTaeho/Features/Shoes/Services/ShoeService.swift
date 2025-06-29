@@ -9,39 +9,29 @@ class ShoeService {
     
     func fetchShoes(cursor: Int?=nil) async throws -> CursorResult<Shoe> {
         
-        return try await shoeApiService.fetchShoes(cursor: cursor)
+        return try await shoeApiService.fetchShoesCursor(cursor: cursor)
     }
     
     func addShoe(_ addShoeDto: AddShoeDto) async throws -> Shoe {
         return try await shoeApiService.addShoe(addShoeDto)
     }
     
-    func updateShoe(_ shoe: Shoe) async throws -> Shoe {
-        // TODO: API 구현
-        // let response = try await httpClient.request(
-        //     path: "\(APIPath.shoes.rawValue)/\(shoe.id)",
-        //     method: .PUT,
-        //     body: shoe,
-        //     responseType: Shoe.self
-        // )
-        // return response
+    func achieveShoe(id: Int) async throws {
         
-        return shoe
+        try await shoeApiService.patchShoe(PatchShoeDto(id: id, isEnabled: false))
+        
     }
     
     func deleteShoe(id: Int) async throws {
-        // TODO: API 구현
-        // try await httpClient.request(
-        //     path: "\(APIPath.shoes.rawValue)/\(id)",
-        //     method: .DELETE
-        // )
+        try await shoeApiService.patchShoe(PatchShoeDto(id: id, isDeleted: true))
     }
     
     func setActiveShoe(id: Int) async throws {
-        // TODO: API 구현
-        // try await httpClient.request(
-        //     path: "\(APIPath.shoes.rawValue)/\(id)/activate",
-        //     method: .POST
-        // )
+        
+        try await shoeApiService.patchShoe(PatchShoeDto(id: id, isEnabled: true))
+    }
+    
+    func updateShoe(_ patchShoeDto: PatchShoeDto) async throws -> Shoe {
+        return try await shoeApiService.patchShoe(patchShoeDto)
     }
 }

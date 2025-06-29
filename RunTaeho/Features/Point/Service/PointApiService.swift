@@ -27,7 +27,7 @@ class PointApiService {
         
         return try await withCheckedThrowingContinuation { continuation in
             httpClient.get(
-                urlPath: GET_POINT_HISTORY,
+                urlPath: APIPath.Point.histories,
                 headers: headers,
                 requestParam: makeRequestParam(cursor: cursor, isEarned: isEarned, startCreatedDatetime: startCreatedDatetime, size: 30),
                 responseType: CursorResult<PointHistory>.self
