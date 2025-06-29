@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ShoeListItemView: View {
-    let viewModel: ShoeListItemViewModel
+    let viewModel: ShoeViewModel
     let onArchive: () -> Void
     let onDelete: () -> Void
     let onTap: () -> Void

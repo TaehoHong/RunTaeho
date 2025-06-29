@@ -8,9 +8,9 @@
 import Foundation
 
 
-struct AddShoeDto {
+struct AddShoeDto: Codable{
     let brand: String
     let model: String
-    let targetDistance: Double
+    let targetDistance: Int
     var isMain: Bool
 }

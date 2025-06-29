@@ -10,5 +10,5 @@ import Foundation
 struct AddShoeViewDto {
     let brand: String
     let model: String
-    let targetDistance: Double
+    let targetDistance: Int
 }

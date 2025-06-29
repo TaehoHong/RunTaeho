@@ -66,8 +66,8 @@ struct AddShoeView: View {
                             .font(CustomFont.custom(size: 16))
                             .foregroundColor(.black)
                         
-                        TextField("", text: $viewModel.targetDistance)
-                            .placeholder(when: viewModel.targetDistance.isEmpty) {
+                        TextField("", text: $viewModel.targetDistanceKm)
+                            .placeholder(when: viewModel.targetDistanceKm.isEmpty) {
                                 Text("500, 800, 1000 (km)")
                                     .font(CustomFont.custom(size: 14))
                                     .foregroundColor(Color(hexCode: "B3B3B3"))

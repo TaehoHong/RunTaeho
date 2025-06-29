@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CurrentShoeView: View {
-    let viewModel: CurrentShoeViewModel
+    let viewModel: ShoeViewModel
     
     var body: some View {
         VStack(spacing: 0) {
@@ -21,11 +21,6 @@ struct CurrentShoeView: View {
                     Text(viewModel.displayName)
                         .font(CustomFont.custom(size: 20))
                         .foregroundColor(.black)
-                    
-                    // 현재 착용 중 표시
-                    Text(viewModel.statusText)
-                        .font(CustomFont.custom(size: 14))
-                        .foregroundColor(Color(hexCode: "808080"))
                     
                     // 총 누적거리
                     Text(viewModel.formattedDistance)

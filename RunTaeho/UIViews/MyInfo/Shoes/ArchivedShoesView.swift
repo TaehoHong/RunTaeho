@@ -27,9 +27,9 @@ struct ArchivedShoesView: View {
                         
                         // 보관된 신발 리스트
                         VStack(spacing: 0) {
-                            ForEach(viewModel.shoes.filter { $0.isArchived }) { shoe in
+                            ForEach(viewModel.achievedShoes) { shoe in
                                 ArchivedShoeListItemView(
-                                    viewModel: ShoeListItemViewModel(shoe: shoe),
+                                    viewModel: shoe,
                                     onUnarchive: {
                                         viewModel.unarchiveShoe(shoe)
                                     }
@@ -37,7 +37,7 @@ struct ArchivedShoesView: View {
                             }
                         }
                         
-                        if viewModel.shoes.filter({ $0.isArchived }).isEmpty {
+                        if viewModel.achievedShoes.isEmpty {
                             VStack(spacing: 16) {
                                 Text("보관된 신발이 없습니다")
                                     .font(CustomFont.custom(size: 16))
@@ -61,7 +61,7 @@ struct ArchivedShoesView: View {
 }
 
 struct ArchivedShoeListItemView: View {
-    let viewModel: ShoeListItemViewModel
+    let viewModel: ShoeViewModel
     let onUnarchive: () -> Void
     
     var body: some View {

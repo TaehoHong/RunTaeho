@@ -1,15 +1,29 @@
 import Foundation
 
-enum NetworkError: Error {
-    case badURL
-    case noData
-    case decodingError(Error)
-}
-
 class HTTPClient {
-
+    
     static let shared = HTTPClient()
-    private init() { }
+    private let session: URLSession
+    private var interceptors: [RequestInterceptor] = []
+    private var configuration: RequestConfiguration
+    
+    private init(session: URLSession = .shared, configuration: RequestConfiguration = .default) {
+        self.session = session
+        self.configuration = configuration
+    }
+    
+    // MARK: - Configuration Methods
+    func setConfiguration(_ configuration: RequestConfiguration) {
+        self.configuration = configuration
+    }
+    
+    func addInterceptor(_ interceptor: RequestInterceptor) {
+        interceptors.append(interceptor)
+    }
+    
+    func removeAllInterceptors() {
+        interceptors.removeAll()
+    }
     
     // MARK: - Logging Methods
     #if DEBUG
@@ -93,19 +107,47 @@ class HTTPClient {
         print("=========================================================\n")
     }
     #endif
-
     
-    func get<T: Decodable>(urlPath: String, headers: [String: String]? = nil, requestParam: RequestParam? = nil, responseType: T.Type, completion: @escaping(Result<T, Error>) -> Void) {
+    // MARK: - Response Validation
+    private func validateResponse(_ response: URLResponse?, data: Data?) throws {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        
+        switch httpResponse.statusCode {
+        case 200...299:
+            return
+        case 401:
+            throw NetworkError.unauthorized
+        case 404:
+            throw NetworkError.notFound
+        case 500...599:
+            throw NetworkError.serverError(statusCode: httpResponse.statusCode)
+        default:
+            throw NetworkError.httpError(statusCode: httpResponse.statusCode, data: data)
+        }
+    }
+    
+    // MARK: - Core Request Method
+    private func request<T: Decodable>(
+        method: String,
+        urlPath: String,
+        headers: [String: String]? = nil,
+        body: Data? = nil,
+        queryParams: [String: String]? = nil,
+        responseType: T.Type,
+        completion: @escaping(Result<T, Error>) -> Void
+    ) {
         let startTime = Date()
         
+        // Build URL with query parameters
         var urlString = URL.makeForStringEndpoint(urlPath)
-
-        if let params = requestParam?.params, !params.isEmpty {
+        if let queryParams = queryParams, !queryParams.isEmpty {
             urlString += "?"
-            let queryString = params.map { "\($0.key)=\($0.value)" }.joined(separator: "&")
+            let queryString = queryParams.map { "\($0.key)=\($0.value)" }.joined(separator: "&")
             urlString += queryString
         }
-
+        
         guard let requestURL = URL(string: urlString) else {
             #if DEBUG
             print("❌ [HTTP ERROR] Invalid URL: \(urlString)")
@@ -113,41 +155,263 @@ class HTTPClient {
             completion(.failure(NetworkError.badURL))
             return
         }
-
-        var request: URLRequest = URLRequest(url: requestURL) 
-        request.httpMethod = "GET"
+        
+        // Create request
+        var request = URLRequest(url: requestURL)
+        request.httpMethod = method
+        request.timeoutInterval = configuration.timeoutInterval
+        request.cachePolicy = configuration.cachePolicy
+        request.allowsCellularAccess = configuration.allowsCellularAccess
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        headers?.forEach { (key: String, value: String) in
-            request.addValue(value, forHTTPHeaderField: key)       
+        
+        // Add custom headers
+        headers?.forEach { key, value in
+            request.addValue(value, forHTTPHeaderField: key)
         }
-
+        
+        // Apply interceptors
+        interceptors.forEach { interceptor in
+            interceptor.intercept(&request)
+        }
+        
+        // Add body
+        request.httpBody = body
+        
         #if DEBUG
         logRequest(request, startTime: startTime)
         #endif
-
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+        
+        // Perform request
+        let task = session.dataTask(with: request) { [weak self] data, response, error in
             #if DEBUG
-            self.logResponse(response, data: data, error: error, startTime: startTime)
+            self?.logResponse(response, data: data, error: error, startTime: startTime)
             #endif
             
             if let error = error {
-                completion(.failure(error))
-                return
-            }
-            
-            guard let data = data else {
-                completion(.failure(NetworkError.noData))
+                completion(.failure(NetworkError.networkError(error)))
                 return
             }
             
             do {
+                try self?.validateResponse(response, data: data)
+                
+                guard let data = data else {
+                    completion(.failure(NetworkError.noData))
+                    return
+                }
+                
                 let decodedResponse = try JSONDecoder().decode(responseType, from: data)
                 completion(.success(decodedResponse))
-            } catch let decodingError {
-                completion(.failure(NetworkError.decodingError(decodingError)))
+            } catch {
+                if error is NetworkError {
+                    completion(.failure(error))
+                } else {
+                    completion(.failure(NetworkError.decodingError(error)))
+                }
             }
         }
+        
         task.resume()
+    }
+    
+    // MARK: - Public HTTP Methods
+    func get<T: Decodable>(
+        urlPath: String,
+        headers: [String: String]? = nil,
+        requestParam: RequestParam? = nil,
+        responseType: T.Type,
+        completion: @escaping(Result<T, Error>) -> Void
+    ) {
+        request(
+            method: "GET",
+            urlPath: urlPath,
+            headers: headers,
+            queryParams: requestParam?.params,
+            responseType: responseType,
+            completion: completion
+        )
+    }
+    
+    func post<T: Decodable, U: Encodable>(
+        urlPath: String,
+        body: U? = nil,
+        headers: [String: String]? = nil,
+        responseType: T.Type,
+        completion: @escaping(Result<T, Error>) -> Void
+    ) {
+        do {
+            let bodyData = try body.map { try JSONEncoder().encode($0) }
+            request(
+                method: "POST",
+                urlPath: urlPath,
+                headers: headers,
+                body: bodyData,
+                responseType: responseType,
+                completion: completion
+            )
+        } catch {
+            completion(.failure(NetworkError.encodingError(error)))
+        }
+    }
+    
+    // POST method without body parameter for simple POST requests
+    func post<T: Decodable>(
+        urlPath: String,
+        headers: [String: String]? = nil,
+        responseType: T.Type,
+        completion: @escaping(Result<T, Error>) -> Void
+    ) {
+        request(
+            method: "POST",
+            urlPath: urlPath,
+            headers: headers,
+            body: nil,
+            responseType: responseType,
+            completion: completion
+        )
+    }
+    
+    // PUT method
+    func put<T: Decodable, U: Encodable>(
+        urlPath: String,
+        body: U? = nil,
+        headers: [String: String]? = nil,
+        responseType: T.Type,
+        completion: @escaping(Result<T, Error>) -> Void
+    ) {
+        do {
+            let bodyData = try body.map { try JSONEncoder().encode($0) }
+            request(
+                method: "PUT",
+                urlPath: urlPath,
+                headers: headers,
+                body: bodyData,
+                responseType: responseType,
+                completion: completion
+            )
+        } catch {
+            completion(.failure(NetworkError.encodingError(error)))
+        }
+    }
+    
+    // DELETE method
+    func delete<T: Decodable>(
+        urlPath: String,
+        headers: [String: String]? = nil,
+        responseType: T.Type,
+        completion: @escaping(Result<T, Error>) -> Void
+    ) {
+        request(
+            method: "DELETE",
+            urlPath: urlPath,
+            headers: headers,
+            responseType: responseType,
+            completion: completion
+        )
+    }
+    
+    // PATCH method
+    func patch<T: Decodable, U: Encodable>(
+        urlPath: String,
+        body: U? = nil,
+        headers: [String: String]? = nil,
+        responseType: T.Type,
+        completion: @escaping(Result<T, Error>) -> Void
+    ) {
+        do {
+            let bodyData = try body.map { try JSONEncoder().encode($0) }
+            request(
+                method: "PATCH",
+                urlPath: urlPath,
+                headers: headers,
+                body: bodyData,
+                responseType: responseType,
+                completion: completion
+            )
+        } catch {
+            completion(.failure(NetworkError.encodingError(error)))
+        }
+    }
+}
+
+// MARK: - Async/Await Support
+@available(iOS 13.0, *)
+extension HTTPClient {
+    
+    func get<T: Decodable>(
+        urlPath: String,
+        headers: [String: String]? = nil,
+        requestParam: RequestParam? = nil,
+        responseType: T.Type
+    ) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            get(urlPath: urlPath, headers: headers, requestParam: requestParam, responseType: responseType) { result in
+                continuation.resume(with: result)
+            }
+        }
+    }
+    
+    func post<T: Decodable, U: Encodable>(
+        urlPath: String,
+        body: U? = nil,
+        headers: [String: String]? = nil,
+        responseType: T.Type
+    ) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            post(urlPath: urlPath, body: body, headers: headers, responseType: responseType) { result in
+                continuation.resume(with: result)
+            }
+        }
+    }
+    
+    func post<T: Decodable>(
+        urlPath: String,
+        headers: [String: String]? = nil,
+        responseType: T.Type
+    ) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            post(urlPath: urlPath, headers: headers, responseType: responseType) { result in
+                continuation.resume(with: result)
+            }
+        }
+    }
+    
+    func put<T: Decodable, U: Encodable>(
+        urlPath: String,
+        body: U? = nil,
+        headers: [String: String]? = nil,
+        responseType: T.Type
+    ) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            put(urlPath: urlPath, body: body, headers: headers, responseType: responseType) { result in
+                continuation.resume(with: result)
+            }
+        }
+    }
+    
+    func delete<T: Decodable>(
+        urlPath: String,
+        headers: [String: String]? = nil,
+        responseType: T.Type
+    ) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            delete(urlPath: urlPath, headers: headers, responseType: responseType) { result in
+                continuation.resume(with: result)
+            }
+        }
+    }
+    
+    func patch<T: Decodable, U: Encodable>(
+        urlPath: String,
+        body: U? = nil,
+        headers: [String: String]? = nil,
+        responseType: T.Type
+    ) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            patch(urlPath: urlPath, body: body, headers: headers, responseType: responseType) { result in
+                continuation.resume(with: result)
+            }
+        }
     }
 }
 

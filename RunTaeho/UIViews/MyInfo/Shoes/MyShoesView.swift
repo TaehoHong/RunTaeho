@@ -31,8 +31,8 @@ struct MyShoesView: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         // 현재 착용 신발
-                        if let activeShoe = viewModel.mainShoe {
-                            CurrentShoeView(viewModel: CurrentShoeViewModel(shoe: activeShoe))
+                        if let mainShoe = viewModel.mainShoe {
+                            CurrentShoeView(viewModel: mainShoe)
                         }
                         
                         // 보유 신발 목록
@@ -45,9 +45,9 @@ struct MyShoesView: View {
                             
                             // 신발 리스트
                             VStack(spacing: 0) {
-                                ForEach(viewModel.shoes.filter { !$0.isArchived }) { shoe in
+                                ForEach(viewModel.activedShoes) { shoe in
                                     ShoeListItemView(
-                                        viewModel: ShoeListItemViewModel(shoe: shoe),
+                                        viewModel: shoe,
                                         onArchive: {
                                             viewModel.archiveShoe(shoe)
                                         },
