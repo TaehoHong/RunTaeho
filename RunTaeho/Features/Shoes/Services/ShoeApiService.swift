@@ -5,7 +5,13 @@ class ShoeApiService {
     private let userStateManager = UserStateManager.shared
     private let httpClient = HTTPClient.shared
     
-    func fetchShoes(cursor: Int?=nil, size: Int=10) async throws -> CursorResult<Shoe> {
+    private init() {}
+    
+    func fetchShoes() async throws -> CursorResult<Shoe> {
+        return try await fetchShoesCursor(cursor: nil, size: 100)
+    }
+    
+    private func fetchShoesCursor(cursor: Int? = nil, size: Int = 10) async throws -> CursorResult<Shoe> {
         
         var params: [String: String] = ["size": "10"]
         if let cursor = cursor {
