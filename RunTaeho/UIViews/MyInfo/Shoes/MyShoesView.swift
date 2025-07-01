@@ -45,7 +45,7 @@ struct MyShoesView: View {
                             
                             // 신발 리스트
                             VStack(spacing: 0) {
-                                ForEach(viewModel.activedShoes) { shoe in
+                                ForEach(viewModel.activeShoes) { shoe in
                                     ShoeListItemView(
                                         viewModel: shoe,
                                         onArchive: {

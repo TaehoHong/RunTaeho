@@ -31,7 +31,7 @@ struct ArchivedShoesView: View {
                                 ArchivedShoeListItemView(
                                     viewModel: shoe,
                                     onUnarchive: {
-                                        viewModel.unarchiveShoe(shoe)
+                                        viewModel.setActiveShoe(shoe)
                                     }
                                 )
                             }

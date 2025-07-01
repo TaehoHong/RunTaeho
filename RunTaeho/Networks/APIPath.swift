@@ -1,25 +1,36 @@
-let GOOGLE_OAUTH_PATH = "/api/v1/oauth/google"
+import Foundation
 
-
-let BASE_USER_PATH = "api/v1/users"
-
-let GET_USER = BASE_USER_PATH
-let GET_MY_DATA = BASE_USER_PATH + "/me"
-
-
-
-
-
-let BASE_RUNNING_RECORDS_PATH = "api/v1/running"
-let SEARCH_RUNNING_RECORDS = BASE_RUNNING_RECORDS_PATH
-
-
-
-let BASE_POINT_PATH = "api/v1/users/points"
-let GET_POINT_HISTORY = BASE_POINT_PATH + "/histories"
-
-
-
-let BASE_SHOE_PATH = "api/v1/shoes"
-let CREATE_SHOE = BASE_SHOE_PATH
-let GET_SHOE = BASE_SHOE_PATH
+enum APIPath {
+    enum Auth {
+        static let googleOAuth = "api/v1/oauth/google"
+    }
+    
+    enum User {
+        static let base = "api/v1/users"
+        static let me = "\(base)/me"
+    }
+    
+    enum RunningRecord {
+        static let base = "api/v1/running"
+        static let search = base
+    }
+    
+    enum Point {
+        static let base = "api/v1/users/points"
+        static let histories = "\(base)/histories"
+    }
+    
+    enum Shoe {
+        static let base = "api/v1/shoes"
+        static let list = base
+        static let create = base
+        
+        static func get(_ id: Int) -> String {
+            return "\(base)/\(id)"
+        }
+        
+        static func patch(_ id: Int) -> String {
+            return "\(base)/\(id)"
+        }
+    }
+}

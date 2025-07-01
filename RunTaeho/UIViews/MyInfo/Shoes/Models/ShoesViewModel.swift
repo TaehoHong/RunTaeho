@@ -3,7 +3,7 @@ import SwiftUI
 
 @MainActor
 class ShoesViewModel: ObservableObject {
-    @Published var activedShoes: [ShoeViewModel] = []
+    @Published var activeShoes: [ShoeViewModel] = []
     @Published var achievedShoes: [ShoeViewModel] = []
     @Published var mainShoe: ShoeViewModel?
     @Published var isLoading = false
@@ -37,7 +37,7 @@ class ShoesViewModel: ObservableObject {
                 } else if shoeViewModel.isAchieved {
                     self.achievedShoes.append(shoeViewModel)
                 } else {
-                    self.activedShoes.append(shoeViewModel)
+                    self.activeShoes.append(shoeViewModel)
                 }
             }
             
@@ -66,11 +66,13 @@ class ShoesViewModel: ObservableObject {
                     shoe: try await shoeService.addShoe(addShoeDto)
                 )
                 
+                self.activeShoes.append(addedShoe)
+                
                 if addedShoe.isMain {
                     self.mainShoe = addedShoe
-                } else {
-                    self.activedShoes.append(addedShoe)
                 }
+                
+                
                 
             } catch {
                 print(error)
@@ -80,105 +82,73 @@ class ShoesViewModel: ObservableObject {
     }
     
     func deleteShoe(_ shoe: ShoeViewModel) {
-//        Task {
-//            do {
-//                try await service.deleteShoe(id: shoe.id)
-//                shoes.removeAll(where: { $0.id == shoe.id })
-//                
-//                // 활성화된 신발이 삭제되면 첫 번째 신발을 활성화
-//                if shoe.isMain && !shoes.isEmpty {
-//                    await setActiveShoe(shoes[0])
-//                } else if shoes.isEmpty {
-//                    mainShoe = nil
-//                }
-//            } catch {
-//                errorMessage = "신발 삭제에 실패했습니다."
-//                print("Error deleting shoe: \(error)")
-//            }
-//        }
+        Task {
+            if let index = activeShoes.firstIndex(where: { $0.id == shoe.id }) {
+                var shoe = activeShoes.remove(at: index)
+                
+                do {
+                    try await shoeService.deleteShoe(id: shoe.id)
+                    
+                } catch {
+                    activeShoes.insert(shoe, at: index)
+                    
+                    print("Error deleting shoe: 신발 삭제 실패했습니다.")
+                }
+            }
+        }
     }
     
     func archiveShoe(_ shoe: ShoeViewModel) {
-//        Task {
-//            if let index = shoes.firstIndex(where: { $0.id == shoe.id }) {
-//                var updatedShoe = shoes[index]
-//                updatedShoe.isEnabled = false
-//                
-//                do {
-//                    let archivedShoe = try await service.updateShoe(updatedShoe)
-//                    shoes[index] = archivedShoe
-//                    
-//                    // 활성화된 신발이 보관되면 다른 신발 활성화
-//                    if shoe.isMain {
-//                        if let firstActive = shoes.first(where: { $0.isEnabled && $0.id != shoe.id }) {
-//                            await setActiveShoe(firstActive)
-//                        } else {
-//                            mainShoe = nil
-//                        }
-//                    }
-//                } catch {
-//                    errorMessage = "신발 보관에 실패했습니다."
-//                    print("Error archiving shoe: \(error)")
-//                }
-//            }
-//        }
+        Task {
+            if let index = activeShoes.firstIndex(where: { $0.id == shoe.id }) {
+                var achievedShoe = activeShoes.remove(at: index)
+                achievedShoe.isAchieved = true
+                
+                do {
+                    try await shoeService.achieveShoe(id: achievedShoe.id)
+                    achievedShoes.append(achievedShoe)
+                    
+                    // 활성화된 신발이 보관되면 다른 신발 활성화
+                    if shoe.isMain {
+                        if let firstActive = activeShoes.first {
+                            await setActiveShoe(firstActive)
+                        } else {
+                            mainShoe = nil
+                        }
+                    }
+                } catch {
+                    achievedShoe.isAchieved = false
+                    activeShoes.insert(achievedShoe, at: index)
+                    if let index = achievedShoes.firstIndex(where: { $0.id == shoe.id }) {
+                        achievedShoes.remove(at: index)
+                    }
+                    
+                    print("Error archiving shoe: 신발 보관에 실패했습니다.")
+                }
+            }
+        }
     }
     
-    func setActiveShoe(_ shoe: ShoeViewModel) async {
-//        do {
-//            try await service.setActiveShoe(id: shoe.id)
-//            
-//            // 모든 신발 비활성화
-//            for index in shoes.indices {
-//                shoes[index].isMain = false
-//            }
-//            
-//            // 선택한 신발 활성화
-//            if let index = shoes.firstIndex(where: { $0.id == shoe.id }) {
-//                shoes[index].isMain = true
-//                shoes[index].lastUsedAt = Date()
-//                mainShoe = shoes[index]
-//            }
-//        } catch {
-//            errorMessage = "활성 신발 설정에 실패했습니다."
-//            print("Error setting active shoe: \(error)")
-//        }
-    }
-    
-    func unarchiveShoe(_ shoe: ShoeViewModel) {
-//        Task {
-//            if let index = shoes.firstIndex(where: { $0.id == shoe.id }) {
-//                var updatedShoe = shoes[index]
-//                updatedShoe.isEnabled = true
-//                
-//                do {
-//                    let unarchivedShoe = try await service.updateShoe(updatedShoe)
-//                    shoes[index] = unarchivedShoe
-//                } catch {
-//                    errorMessage = "신발 복원에 실패했습니다."
-//                    print("Error unarchiving shoe: \(error)")
-//                }
-//            }
-//        }
-    }
-    
-    func updateDistance(for shoeId: Int, distance: Double) {
-//        Task {
-//            if let index = shoes.firstIndex(where: { $0.id == shoeId }) {
-//                var updatedShoe = shoes[index]
-//                updatedShoe.totalDistance += distance
-//                
-//                do {
-//                    let savedShoe = try await service.updateShoe(updatedShoe)
-//                    shoes[index] = savedShoe
-//                    if savedShoe.isMain {
-//                        mainShoe = savedShoe
-//                    }
-//                } catch {
-//                    errorMessage = "신발 거리 업데이트에 실패했습니다."
-//                    print("Error updating shoe distance: \(error)")
-//                }
-//            }
-//        }
+    func setActiveShoe(_ shoe: ShoeViewModel) {
+        Task {
+            if let index = achievedShoes.firstIndex(where: { $0.id == shoe.id }) {
+                var shoe = achievedShoes.remove(at: index)
+                shoe.isAchieved = false
+                
+                do {
+                    try await shoeService.setActiveShoe(id: shoe.id)
+                    activeShoes.append(shoe)
+                    
+                } catch {
+                    shoe.isAchieved = false
+                    achievedShoes.insert(shoe, at: index)
+                    if let index = activeShoes.firstIndex(where: { $0.id == shoe.id }) {
+                        activeShoes.remove(at: index)
+                    }
+                    
+                    print("Error activing shoe: 신발 활성화 실패했습니다.")
+                }
+            }
+        }
     }
 }

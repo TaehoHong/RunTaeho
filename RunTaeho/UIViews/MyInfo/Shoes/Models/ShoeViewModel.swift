@@ -14,7 +14,7 @@ struct ShoeViewModel: Identifiable {
     let targetDistance: Int?
     let totalDistance: Int
     let isMain: Bool
-    let isAchieved: Bool
+    var isAchieved: Bool
     let imageSystemName: String = "shoeprints.fill"
     
     var displayName: String {

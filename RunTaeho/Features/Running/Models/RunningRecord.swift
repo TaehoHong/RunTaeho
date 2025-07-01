@@ -1,21 +1,11 @@
-//
-//  RunningRecord.swift
-//  RunTaeho
-//
-//  Created by Hong Taeho on 6/29/25.
-//
-
 import Foundation
 
-class RunningRecord: Identifiable, Codable {
-    var id: Int
-    var distance: Double
-    var duration: Double
-    var date: Date
-    
-    init(distance: Double, duration: Double, date: Date = Date()) {
-        self.distance = distance
-        self.durationSec: Double = duration
-        self.durationSec = duration
-    }
+struct RunningRecord: Identifiable, Codable {
+    let id: Int
+    let distance: Double
+    let cadence: Int
+    let hartRate: Int
+    let calories: Int
+    let durationSec: TimeInterval
+    let startTimestamp: TimeInterval
 }
