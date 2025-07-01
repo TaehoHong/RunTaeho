@@ -11,6 +11,7 @@ struct RunningRecordItem: Identifiable, Codable {
     let durationSec: TimeInterval
     let startTimestamp: TimeInterval
     let locations: [LocationData]?
+    var isUploaded: Bool = false
 }
 
 // 위치 데이터 모델

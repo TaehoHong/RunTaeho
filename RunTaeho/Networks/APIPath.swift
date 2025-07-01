@@ -13,6 +13,7 @@ enum APIPath {
     enum RunningRecord {
         static let base = "api/v1/running"
         static let search = base
+        static let start = base
     }
     
     enum Point {

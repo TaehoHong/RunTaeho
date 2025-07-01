@@ -345,8 +345,16 @@ extension HTTPClient {
         responseType: T.Type
     ) async throws -> T {
         try await withCheckedThrowingContinuation { continuation in
-            get(urlPath: urlPath, headers: headers, requestParam: requestParam, responseType: responseType) { result in
-                continuation.resume(with: result)
+            get(urlPath: urlPath, headers: headers, requestParam: requestParam, responseType: responseType) {
+                result in
+                switch result {
+                case .success(let user):
+                    print("UserInfo received: \(user)")
+                    continuation.resume(returning: user)
+                case .failure(let error):
+                    print("Error occurred: \(error)")
+                    continuation.resume(throwing: error)
+                }
             }
         }
     }

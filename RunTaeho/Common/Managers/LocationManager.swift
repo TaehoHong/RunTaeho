@@ -84,6 +84,11 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         return totalDistance
     }
     
+    // 현재 위치 반환
+    func getCurrentLocation() -> CLLocation? {
+        return allLocations.last
+    }
+    
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         locationAccuracy = location.horizontalAccuracy

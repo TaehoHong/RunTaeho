@@ -3,7 +3,7 @@ import Foundation
 class RunningRecordService {
     
     static let shared = RunningRecordService()
-    private let runningRecordService: RunningRecordAPIProtocol = RunningRecordAPIService.shared
+    private let runningRecordApiService = RunningRecordAPIService.shared
     
     private init() { }
     
@@ -14,7 +14,7 @@ class RunningRecordService {
         var cursor: Int? = nil
         
        while hasNext {
-           let runningRecordPage = try await runningRecordService.getRunningRecords(cursor: cursor, size: nil, startDate: startDate, endDate: endDate ?? Date())
+           let runningRecordPage = try await runningRecordApiService.getRunningRecords(cursor: cursor, size: nil, startDate: startDate, endDate: endDate ?? Date())
            records.append(contentsOf: runningRecordPage.content)
            cursor = runningRecordPage.cursor
            hasNext = runningRecordPage.hasNext
@@ -28,7 +28,24 @@ class RunningRecordService {
 
     func loadMoreRecords(cursor: Int?, size: Int) async throws -> CursorResult<RunningRecord> {
         
-        return try await self.runningRecordService.getRunningRecords(cursor: cursor, size: size, startDate: nil, endDate: nil)
+        return try await self.runningRecordApiService.getRunningRecords(cursor: cursor, size: size, startDate: nil, endDate: nil)
         
     }
+    
+    func startRunning() async -> RunningRecord {
+        
+        let record: RunningRecord
+        
+        do {
+            
+            record = try await self.runningRecordApiService.startRunning()
+            
+        } catch {
+            print(error)
+            record = RunningRecord(id: 0)
+        }
+        
+        return record
+    }
 }
+

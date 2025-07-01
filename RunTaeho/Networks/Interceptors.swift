@@ -4,9 +4,7 @@ import UIKit
 // MARK: - Auth Interceptor Example
 class AuthInterceptor: RequestInterceptor {
     private var accessToken: String? {
-        // TODO: TokenManager나 UserDefaults에서 토큰을 가져오는 로직 구현
-        // return TokenManager.shared.accessToken
-        return nil
+        return UserStateManager.shared.authToken
     }
     
     func intercept(_ request: inout URLRequest) {

@@ -32,7 +32,7 @@ struct RunningView: View {
                             .ignoresSafeArea()
                             .frame(width: width, height: height * 0.5, alignment: .top)
                         
-                        DebugView(viewModel: viewModel)
+//                        DebugView(viewModel: viewModel)
 
                         VStack(spacing: 10) {
                             Spacer()
@@ -88,7 +88,7 @@ struct RunningView: View {
             }
         } message: {
             if let data = viewModel.recoveryData {
-                Text("마지막으로 저장된 러닝:\n거리: \(String(format: "%.2f", data.distance))m\n시간: \(Int(data.duration)/60)분 \(Int(data.duration)%60)초\n\n이 데이터를 복구하시겠습니까?")
+                Text("마지막으로 저장된 러닝:\n거리: \(String(format: "%.2f", data.record.distance))m\n시간: \(Int(data.record.durationSec)/60)분 \(Int(data.record.durationSec)%60)초\n\n이 데이터를 복구하시겠습니까?")
             }
         }
     }

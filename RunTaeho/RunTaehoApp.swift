@@ -45,6 +45,8 @@ struct RunTaehoApp: App {
         print("앱 시작 횟수: \(userStateManager.appLaunchCount)")
         print("마지막 앱 버전: \(userStateManager.lastAppVersion ?? "없음")")
         
+        HTTPClient.shared.addInterceptor(AuthInterceptor())
+        
         // 사용자 로그인 상태 확인
         if userStateManager.isLoggedIn {
             print("사용자 로그인 상태: \(userStateManager.currentUser?.displayName ?? "알 수 없음")")

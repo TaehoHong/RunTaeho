@@ -1,10 +1,17 @@
 import Foundation
 
-class RunningRecordAPIService: RunningRecordAPIProtocol {
+class RunningRecordAPIService {
 
     static let shared = RunningRecordAPIService()
     private let userStateManager = UserStateManager.shared
     private let httpClient = HTTPClient.shared
+    
+    func startRunning() async throws -> RunningRecord {
+        return try await httpClient.post(
+            urlPath: APIPath.RunningRecord.search,
+            responseType: RunningRecord.self
+        )
+    }
 
     
     func getRunningRecords(cursor: Int? = nil, size: Int? = nil, startDate: Date? = nil, endDate: Date? = nil) async throws -> CursorResult<RunningRecord> {
@@ -17,23 +24,12 @@ class RunningRecordAPIService: RunningRecordAPIProtocol {
             headers = nil
         }
         
-        return try await withCheckedThrowingContinuation { continuation in
-            httpClient.get(
+        return try await httpClient.get(
                 urlPath: APIPath.RunningRecord.search,
                 headers: headers,
                 requestParam: makeRequestParam(cursor: cursor, size: size, startDate: startDate, endDate: endDate),
                 responseType: CursorResult<RunningRecord>.self
-            ) { result in
-                switch result {
-                case .success(let user):
-                    print("UserInfo received: \(user)")
-                    continuation.resume(returning: user)
-                case .failure(let error):
-                    print("Error occurred: \(error)")
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
+        )
     }
     
     private func makeRequestParam(cursor: Int? = nil, size: Int? = nil, startDate: Date? = nil, endDate: Date? = nil) -> RequestParam {
