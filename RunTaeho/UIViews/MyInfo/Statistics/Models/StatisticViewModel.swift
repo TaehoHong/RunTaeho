@@ -82,13 +82,22 @@ class StatisticViewModel: ObservableObject {
         do {
             let runningRecordPage = try await runningRecordService.loadRuningRecords(startDate: startDate, endDate: endDate ?? Date())
 
-            self.records.append(contentsOf: runningRecordPage.content)
+            // 중복 제거 로직 추가
+            let newRecords = runningRecordPage.content
+            for record in newRecords {
+                if !self.records.contains(where: { $0.id == record.id }) {
+                    self.records.append(record)
+                }
+            }
+            
             self.isLoading = false
             self.cursor = runningRecordPage.cursor
             self.hasNextData = runningRecordPage.hasNext
             
             #if DEBUG
-            print("loadRuningRecords records count: \(runningRecordPage.content)")
+            print("loadRuningRecords records count: \(runningRecordPage.content.count)")
+            print("loadRuningRecords records cursor: \(runningRecordPage.cursor)")
+            print("Total records after deduplication: \(self.records.count)")
             #endif
             
         } catch {
@@ -106,18 +115,28 @@ class StatisticViewModel: ObservableObject {
         
         isLoading = true
         do {
-            let newRecords = try await self.runningRecordService.loadMoreRecords(cursor: self.cursor, size: 30)
-            self.records.append(contentsOf: newRecords.content)
-            self.cursor = newRecords.cursor
+            let newRecordsPage = try await self.runningRecordService.loadMoreRecords(cursor: self.cursor, size: 30)
+            
+            // 중복 제거 로직 추가
+            let newRecords = newRecordsPage.content
+            for record in newRecords {
+                if !self.records.contains(where: { $0.id == record.id }) {
+                    self.records.append(record)
+                }
+            }
+            
+            self.cursor = newRecordsPage.cursor
+            self.hasNextData = newRecordsPage.hasNext
             self.isLoading = false
             
             #if DEBUG
-            print("loadMoreRecords newRecords: \(records.count)")
+            print("loadMoreRecords new records count: \(newRecords.count)")
+            print("Total records after deduplication: \(self.records.count)")
             #endif
             
         } catch {
             self.error = error
-            print("Error loading initial records: \(error)")
+            print("Error loading more records: \(error)")
         }
         
         self.records.sort{ x,y in x.startTimestamp > y.startTimestamp}

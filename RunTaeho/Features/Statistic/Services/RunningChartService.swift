@@ -57,8 +57,8 @@ class RunningChartService {
         }
 
         let records = rowRecords.filter { calendar.isDate(Date(timeIntervalSince1970: $0.startTimestamp), equalTo: startDate, toGranularity: calendarComponenet) }
-        print("rowRecords: \(rowRecords)")
-        print("records: \(records)")
+//        print("rowRecords: \(rowRecords)")
+//        print("records: \(records)")
 
         chartData = range.map { day in
             let date = calendar.date(byAdding: getGranularity(period: period), value: day, to: startDate)!
@@ -72,10 +72,10 @@ class RunningChartService {
             
             // filter를 통과한 값이 1개 이상일 때 로깅
             if filteredRecords.count >= 1 {
-                print("Filtered records count: \(filteredRecords.count)")
+//                print("Filtered records count: \(filteredRecords.count)")
                 for record in filteredRecords {
                     let recordDate = Date(timeIntervalSince1970: record.startTimestamp)
-                    print("Record - timestamp: \(record.startTimestamp), Date: \(recordDate), Distance: \(record.distance)")
+//                    print("Record - timestamp: \(record.startTimestamp), Date: \(recordDate), Distance: \(record.distance)")
                 }
             }
             

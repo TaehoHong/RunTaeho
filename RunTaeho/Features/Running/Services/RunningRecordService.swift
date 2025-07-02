@@ -16,13 +16,16 @@ class RunningRecordService {
        while hasNext {
            let runningRecordPage = try await runningRecordApiService.getRunningRecords(cursor: cursor, size: nil, startDate: startDate, endDate: endDate ?? Date())
            records.append(contentsOf: runningRecordPage.content)
-           cursor = runningRecordPage.cursor
+           
+           if runningRecordPage.cursor != nil {
+               cursor = runningRecordPage.cursor
+           }
            hasNext = runningRecordPage.hasNext
         }
             
         records.sort{ x,y in x.startTimestamp > y.startTimestamp}
         
-        return CursorResult(content: records, cursor: cursor, hasNext: false)
+        return CursorResult(content: records, cursor: cursor, hasNext: true)
     }
 
 

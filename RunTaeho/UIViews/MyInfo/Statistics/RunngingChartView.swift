@@ -4,7 +4,7 @@ import Charts
 
 struct RunningChartView: View {
 
-    private let chartHight: CGFloat = 200
+    private let chartHight: CGFloat = 170
     @ObservedObject var viewModel: RunningChartViewModel
 
     var body: some View {
