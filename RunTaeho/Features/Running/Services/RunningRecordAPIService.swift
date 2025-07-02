@@ -9,6 +9,7 @@ class RunningRecordAPIService {
     func startRunning() async throws -> RunningRecord {
         return try await httpClient.post(
             urlPath: APIPath.RunningRecord.search,
+            body: ["startTimestamp": String(Int(Date().timeIntervalSince1970))],
             responseType: RunningRecord.self
         )
     }

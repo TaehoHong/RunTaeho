@@ -21,12 +21,12 @@ class RunningDataManager {
     // MARK: - 러닝 세션 관리
     
     /// 새 러닝 세션 시작 (서버에서 받은 ID 또는 0)
-    func startNewRunningSession(recordId: Int) {
-        currentRunningRecord = RunningRecord(id: recordId)
+    func startNewRunningSession(record: RunningRecord) {
+        currentRunningRecord = record
         currentRunningSegments.removeAll()
         segmentIdCounter = 1
         
-        print("🏃‍♂️ 새 러닝 세션 시작: Record ID = \(recordId)")
+        print("🏃‍♂️ 새 러닝 세션 시작: Record ID = \(record.id)")
     }
     
     /// 10m마다 세그먼트 추가
@@ -256,78 +256,6 @@ class RunningDataManager {
         print("🔄 세션 복원 완료: Record ID \(record.id), 세그먼트 수 \(segments.count)")
     }
     
-    // MARK: - 기존 임시 데이터 저장 (호환성 유지)
-    
-    /// 레거시 임시 데이터 저장 (기존 코드와 호환성 유지)
-    func saveTempRunningData(distance: Double, duration: TimeInterval, locations: [CLLocation]) {
-        let locationData = locations.map { LocationData(from: $0) }
-        
-        let tempData: [String: Any] = [
-            "distance": distance,
-            "duration": duration,
-            "locations": locationData.map { location in
-                [
-                    "latitude": location.latitude,
-                    "longitude": location.longitude,
-                    "timestamp": location.timestamp.timeIntervalSince1970,
-                    "speed": location.speed,
-                    "altitude": location.altitude
-                ]
-            },
-            "lastSaved": Date().timeIntervalSince1970
-        ]
-        
-        do {
-            let jsonData = try JSONSerialization.data(withJSONObject: tempData)
-            let fileURL = documentsDirectory.appendingPathComponent("legacy_\(tempDataFileName)")
-            try jsonData.write(to: fileURL)
-        } catch {
-            print("❌ 레거시 임시 데이터 저장 실패: \(error)")
-        }
-    }
-    
-    /// 레거시 임시 데이터 복원
-    func loadTempRunningData() -> (distance: Double, duration: TimeInterval, locations: [LocationData])? {
-        let fileURL = documentsDirectory.appendingPathComponent("legacy_\(tempDataFileName)")
-        
-        guard FileManager.default.fileExists(atPath: fileURL.path) else {
-            return nil
-        }
-        
-        do {
-            let jsonData = try Data(contentsOf: fileURL)
-            let tempData = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any]
-            
-            guard let distance = tempData?["distance"] as? Double,
-                  let duration = tempData?["duration"] as? TimeInterval,
-                  let locationsArray = tempData?["locations"] as? [[String: Any]] else {
-                return nil
-            }
-            
-            let locations = locationsArray.compactMap { dict -> LocationData? in
-                guard let latitude = dict["latitude"] as? Double,
-                      let longitude = dict["longitude"] as? Double,
-                      let timestamp = dict["timestamp"] as? TimeInterval,
-                      let speed = dict["speed"] as? Double,
-                      let altitude = dict["altitude"] as? Double else {
-                    return nil
-                }
-                
-                return LocationData(
-                    latitude: latitude,
-                    longitude: longitude,
-                    timestamp: Date(timeIntervalSince1970: timestamp),
-                    speed: speed,
-                    altitude: altitude
-                )
-            }
-            
-            return (distance, duration, locations)
-        } catch {
-            print("❌ 레거시 임시 데이터 복원 실패: \(error)")
-            return nil
-        }
-    }
     
     // MARK: - 데이터 저장/로드
     
@@ -375,10 +303,8 @@ class RunningDataManager {
     /// 임시 데이터 삭제
     func deleteTempData() {
         let fileURL = documentsDirectory.appendingPathComponent(tempDataFileName)
-        let legacyFileURL = documentsDirectory.appendingPathComponent("legacy_\(tempDataFileName)")
         
         try? FileManager.default.removeItem(at: fileURL)
-        try? FileManager.default.removeItem(at: legacyFileURL)
     }
     
     /// 현재 세션이 진행 중인지 확인

@@ -16,6 +16,15 @@ enum APIPath {
         static let start = base
     }
     
+    enum RunningRecordItem {
+        static let base = "api/v1/running"
+        
+        
+        static func save(_ id: Int) -> String {
+            return "\(base)/\(id)/items"
+        }
+    }
+    
     enum Point {
         static let base = "api/v1/users/points"
         static let histories = "\(base)/histories"

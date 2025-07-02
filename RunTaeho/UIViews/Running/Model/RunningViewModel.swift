@@ -16,6 +16,7 @@ class RunningViewModel: ObservableObject {
     public let statsManager = StatsManager()
     private let charactorMoveMentService = CharactorMoveMentService.shared
     private let runningRecordService = RunningRecordService.shared
+    private let runningRecordItemService = RunningRecordItemService.shared
     private let runningDataManager = RunningDataManager.shared
     
     private var cancellables = Set<AnyCancellable>()
@@ -49,28 +50,26 @@ class RunningViewModel: ObservableObject {
     
     func startRunning() {
         // 1. 서버에 startRunning() API 호출 (TODO: 실제 API 구현)
-        startRunningOnServer { [weak self] recordId in
+        startRunningOnServer { [weak self] record in
             DispatchQueue.main.async {
-                self?.handleStartRunningResponse(recordId: recordId)
+                self?.handleStartRunningResponse(record: record)
             }
         }
     }
     
-    private func startRunningOnServer(completion: @escaping (Int) -> Void) {
-        // TODO: 실제 서버 API 호출 구현
-        // 현재는 임시로 성공한 것으로 가정하고 임의의 ID 반환
-        DispatchQueue.global().asyncAfter(deadline: .now() + 1.0) {
-            let recordId = Int(Date().timeIntervalSince1970) // 임시 ID
-            completion(recordId)
+    private func startRunningOnServer(completion: @escaping (RunningRecord) -> Void) {
+        Task {
+            let record = await runningRecordService.startRunning()
+            
+            DispatchQueue.main.async {
+                completion(record)
+            }
         }
-        
-        // 서버 실패 시 예시:
-        // completion(0) // ID 0으로 로컬에서 진행
     }
     
-    private func handleStartRunningResponse(recordId: Int) {
+    private func handleStartRunningResponse(record: RunningRecord) {
         // 2. RunningDataManager에 새 세션 시작
-        runningDataManager.startNewRunningSession(recordId: recordId)
+        runningDataManager.startNewRunningSession(record: record)
         
         // 3. 러닝 시작
         appState.setRunningState(.Running)
@@ -80,8 +79,6 @@ class RunningViewModel: ObservableObject {
         
         // 세그먼트 추적 초기화
         initializeSegmentTracking()
-        
-        print("🏃‍♂️ 러닝 시작: Record ID = \(recordId)")
     }
     
     func pauseRunning() {
@@ -144,11 +141,22 @@ class RunningViewModel: ObservableObject {
     }
     
     private func uploadRunningDataToServer(record: RunningRecord, segments: [RunningRecordItem], completion: @escaping (Bool) -> Void) {
-        // TODO: 실제 서버 API 구현
-        // 현재는 임시로 성공한 것으로 가정
-        DispatchQueue.global().asyncAfter(deadline: .now() + 2.0) {
-            completion(true) // 성공
-            // completion(false) // 실패
+        Task {
+            do {
+                // 세그먼트들을 서버에 업로드
+                try await runningRecordItemService.saveAll(runningRecordId: record.id, items: segments)
+                
+                // TODO: RunningRecord도 서버에 업로드 (RunningRecordAPIService 사용)
+                
+                DispatchQueue.main.async {
+                    completion(true)
+                }
+            } catch {
+                print("❌ 서버 업로드 실패: \(error)")
+                DispatchQueue.main.async {
+                    completion(false)
+                }
+            }
         }
     }
     
@@ -282,14 +290,6 @@ class RunningViewModel: ObservableObject {
                 print("거리: \(totalDistance/1000.0)km")
                 print("시간: \(totalDuration)초")
                 print("세그먼트 수: \(tempSessionData.segments.count)")
-            }
-        }
-        // 레거시 데이터 복구 (기존 호환성)
-        else if let legacyData = runningDataManager.loadTempRunningData() {
-            // 기존 방식의 데이터가 있으면 알림
-            DispatchQueue.main.async { [weak self] in
-                print("🔄 레거시 러닝 데이터 발견: 거리 \(legacyData.distance/1000.0)km, 시간 \(legacyData.duration)초")
-                // TODO: 레거시 데이터 처리 로직
             }
         }
     }
