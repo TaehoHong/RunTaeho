@@ -96,8 +96,8 @@ class RunningDataManager {
             id: finalRecord.id,
             distance: totalDistance,
             cadence: avgCadence,
-            hartRate: avgHeartRate,
-            calories: Int(totalCalories),
+            heartRate: avgHeartRate,
+            calorie: Int(totalCalories),
             durationSec: totalDuration,
             startTimestamp: finalRecord.startTimestamp
         )

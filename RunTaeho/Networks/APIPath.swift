@@ -14,6 +14,9 @@ enum APIPath {
         static let base = "api/v1/running"
         static let search = base
         static let start = base
+        static func end(_ id: Int) -> String {
+            "\(base)/\(id)/end"
+        }
     }
     
     enum RunningRecordItem {

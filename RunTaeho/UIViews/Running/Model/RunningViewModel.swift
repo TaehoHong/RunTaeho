@@ -144,15 +144,27 @@ class RunningViewModel: ObservableObject {
         Task {
             do {
                 // 세그먼트들을 서버에 업로드
-                try await runningRecordItemService.saveAll(runningRecordId: record.id, items: segments)
-                
-                // TODO: RunningRecord도 서버에 업로드 (RunningRecordAPIService 사용)
-                
+                try await runningRecordService.endRunning(runningRecord: record)
                 DispatchQueue.main.async {
                     completion(true)
                 }
+                
             } catch {
                 print("❌ 서버 업로드 실패: \(error)")
+                DispatchQueue.main.async {
+                    completion(false)
+                }
+            }
+            
+            do {
+                // 세그먼트들을 서버에 업로드
+                try await runningRecordItemService.saveAll(runningRecordId: record.id, items: segments)
+                DispatchQueue.main.async {
+                    completion(true)
+                }
+                
+            } catch {
+                print("❌ 세그먼트 업로드 실패: \(error)")
                 DispatchQueue.main.async {
                     completion(false)
                 }

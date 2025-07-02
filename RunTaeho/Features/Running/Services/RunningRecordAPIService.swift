@@ -7,10 +7,24 @@ class RunningRecordAPIService {
     private let httpClient = HTTPClient.shared
     
     func startRunning() async throws -> RunningRecord {
-        return try await httpClient.post(
-            urlPath: APIPath.RunningRecord.search,
+        
+        struct RunningRecordId: Codable {
+            let id: Int
+        }
+        
+        let recordId = try await httpClient.post(
+            urlPath: APIPath.RunningRecord.start,
             body: ["startTimestamp": String(Int(Date().timeIntervalSince1970))],
-            responseType: RunningRecord.self
+            responseType: RunningRecordId.self
+        ).id
+        
+        return RunningRecord(id: recordId)
+    }
+    
+    func endRunning(runningRecord: RunningRecord) async throws {
+        try await httpClient.put(
+            urlPath: APIPath.RunningRecord.end(runningRecord.id),
+            body: runningRecord
         )
     }
 

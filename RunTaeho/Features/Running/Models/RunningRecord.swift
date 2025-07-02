@@ -4,8 +4,8 @@ struct RunningRecord: Identifiable, Codable {
     let id: Int
     let distance: Double
     let cadence: Int
-    let hartRate: Int
-    let calories: Int
+    let heartRate: Int
+    let calorie: Int
     let durationSec: TimeInterval
     let startTimestamp: TimeInterval
     
@@ -14,19 +14,19 @@ struct RunningRecord: Identifiable, Codable {
         self.id = id
         self.distance = 0
         self.cadence = 0
-        self.hartRate = 0
-        self.calories = 0
+        self.heartRate = 0
+        self.calorie = 0
         self.durationSec = 0
         self.startTimestamp = Date().timeIntervalSince1970
     }
     
     // 완료된 러닝 기록 생성 (모든 필드 지정)
-    init(id: Int, distance: Double, cadence: Int, hartRate: Int, calories: Int, durationSec: TimeInterval, startTimestamp: TimeInterval) {
+    init(id: Int, distance: Double, cadence: Int, heartRate: Int, calorie: Int, durationSec: TimeInterval, startTimestamp: TimeInterval) {
         self.id = id
         self.distance = distance
         self.cadence = cadence
-        self.hartRate = hartRate
-        self.calories = calories
+        self.heartRate = heartRate
+        self.calorie = calorie
         self.durationSec = durationSec
         self.startTimestamp = startTimestamp
     }

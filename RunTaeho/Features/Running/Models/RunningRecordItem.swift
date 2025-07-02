@@ -10,6 +10,7 @@ class RunningRecordItem: Identifiable, Codable {
     let orderIndex: Int
     let durationSec: TimeInterval
     let startTimestamp: TimeInterval
+    let endTimestamp: TimeInterval?
     let locations: [LocationData]?
     var isUploaded: Bool = false
     
@@ -23,6 +24,7 @@ class RunningRecordItem: Identifiable, Codable {
         self.durationSec = durationSec
         self.startTimestamp = startTimestamp
         self.locations = locations
+        self.endTimestamp = nil
     }
     
     // 업로드 완료 표시
