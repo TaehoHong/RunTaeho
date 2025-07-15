@@ -46,4 +46,9 @@ enum APIPath {
             return "\(base)/\(id)"
         }
     }
+    
+    enum Item {
+        static let base = "api/v1/items"
+        static let list = base
+    }
 }

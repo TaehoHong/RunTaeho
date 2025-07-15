@@ -38,45 +38,7 @@ struct PurchaseConfirmationPopup: View {
                     .padding(.bottom, 20)
                 
                 // Items List
-                ScrollView {
-                    VStack(spacing: 16) {
-                        ForEach(items) { item in
-                            HStack(spacing: 12) {
-                                // Item Info
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(item.name)
-                                        .font(CustomFont.custom(size: 16))
-                                        .foregroundColor(.black)
-                                    
-                                    Text(item.categoryName)
-                                        .font(CustomFont.custom(size: 12))
-                                        .foregroundColor(Color(hexCode: "666666"))
-                                }
-                                
-                                Spacer()
-                                
-                                // Price
-                                HStack(spacing: 3) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color(hexCode: "7BE87B"))
-                                            .frame(width: 16, height: 16)
-                                        
-                                        Text("P")
-                                            .font(CustomFont.custom(size: 9))
-                                            .foregroundColor(.white)
-                                    }
-                                    
-                                    Text("\(item.price)")
-                                        .font(CustomFont.custom(size: 16))
-                                        .foregroundColor(.black)
-                                }
-                            }
-                            .padding(.horizontal, 20)
-                        }
-                    }
-                }
-                .frame(maxHeight: 200)
+                itemsListView
                 
                 // Divider
                 Rectangle()
@@ -85,49 +47,7 @@ struct PurchaseConfirmationPopup: View {
                     .padding(.vertical, 16)
                 
                 // Price Summary
-                VStack(spacing: 12) {
-                    HStack {
-                        Text("보유 포인트")
-                            .font(CustomFont.custom(size: 14))
-                            .foregroundColor(Color(hexCode: "4D4D4D"))
-                        
-                        Spacer()
-                        
-                        Text("\(userPoints)P")
-                            .font(CustomFont.custom(size: 14))
-                            .foregroundColor(Color(hexCode: "4D4D4D"))
-                    }
-                    
-                    HStack {
-                        Text("총 구매 금액")
-                            .font(CustomFont.custom(size: 14))
-                            .foregroundColor(Color(hexCode: "4D4D4D"))
-                        
-                        Spacer()
-                        
-                        Text("-\(totalPrice)P")
-                            .font(CustomFont.custom(size: 14))
-                            .foregroundColor(Color(hexCode: "FF0000"))
-                    }
-                    
-                    Rectangle()
-                        .fill(Color(hexCode: "E6E6E6"))
-                        .frame(height: 1)
-                    
-                    HStack {
-                        Text("구매 후 남은 포인트")
-                            .font(CustomFont.custom(size: 14))
-                            .foregroundColor(.black)
-                        
-                        Spacer()
-                        
-                        Text("\(remainingPoints)P")
-                            .font(CustomFont.custom(size: 16))
-                            .foregroundColor(canPurchase ? Color(hexCode: "009900") : Color(hexCode: "FF0000"))
-                            .fontWeight(.bold)
-                    }
-                }
-                .padding(.horizontal, 20)
+                priceSummaryView
                 
                 // Warning message if not enough points
                 if !canPurchase {
@@ -180,5 +100,95 @@ struct PurchaseConfirmationPopup: View {
             .cornerRadius(8)
             .frame(width: 340)
         }
+    }
+    
+    // MARK: - Subviews
+    private var itemsListView: some View {
+        
+        ScrollView {
+            VStack(spacing: 16) {
+                ForEach(items) { item in
+                    HStack(spacing: 12) {
+                        // Item Info
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.name)
+                                .font(CustomFont.custom(size: 16))
+                                .foregroundColor(.black)
+                            
+                            Text(item.categoryName)
+                                .font(CustomFont.custom(size: 12))
+                                .foregroundColor(Color(hexCode: "666666"))
+                        }
+                        
+                        Spacer()
+                        
+                        // Price
+                        HStack(spacing: 3) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color(hexCode: "7BE87B"))
+                                    .frame(width: 16, height: 16)
+                                
+                                Text("P")
+                                    .font(CustomFont.custom(size: 9))
+                                    .foregroundColor(.white)
+                            }
+                            
+                            Text("\(item.price)")
+                                .font(CustomFont.custom(size: 16))
+                                .foregroundColor(.black)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                }
+            }
+        }
+        .frame(maxHeight: 200)
+    }
+    
+    private var priceSummaryView: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("보유 포인트")
+                    .font(CustomFont.custom(size: 14))
+                    .foregroundColor(Color(hexCode: "4D4D4D"))
+                
+                Spacer()
+                
+                Text("\(userPoints)P")
+                    .font(CustomFont.custom(size: 14))
+                    .foregroundColor(Color(hexCode: "4D4D4D"))
+            }
+            
+            HStack {
+                Text("총 구매 금액")
+                    .font(CustomFont.custom(size: 14))
+                    .foregroundColor(Color(hexCode: "4D4D4D"))
+                
+                Spacer()
+                
+                Text("-\(totalPrice)P")
+                    .font(CustomFont.custom(size: 14))
+                    .foregroundColor(Color(hexCode: "FF0000"))
+            }
+            
+            Rectangle()
+                .fill(Color(hexCode: "E6E6E6"))
+                .frame(height: 1)
+            
+            HStack {
+                Text("구매 후 남은 포인트")
+                    .font(CustomFont.custom(size: 14))
+                    .foregroundColor(.black)
+                
+                Spacer()
+                
+                Text("\(remainingPoints)P")
+                    .font(CustomFont.custom(size: 16))
+                    .foregroundColor(canPurchase ? Color(hexCode: "009900") : Color(hexCode: "FF0000"))
+                    .fontWeight(.bold)
+            }
+        }
+        .padding(.horizontal, 20)
     }
 }

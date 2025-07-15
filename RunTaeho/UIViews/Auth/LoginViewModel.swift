@@ -110,9 +110,10 @@ class LoginViewModel: ObservableObject {
                 equippedItems: [
                     EquippedItemDataDto(
                         id: 1,
-                        name: "테스트 무기",
+                        name: "New_Hair_01",
                         itemTypeId: 1,
-                        filePath: "/file/path"
+                        filePath: "items/Hair/",
+                        unityFilePath: "Assets/05.Resource/Hair/"
                     )
                 ]
             )

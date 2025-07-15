@@ -1,84 +1,29 @@
 import Foundation
 
-protocol AvatarServiceProtocol {
-    func fetchAvatarItems() async throws -> [AvatarItem]
-    func equipItem(_ item: AvatarItem) async throws
-    func updateEquippedItems(_ equippedItems: [ItemType: AvatarItem]) async throws
-    func purchaseItem(_ item: AvatarItem) async throws -> Bool
-    func getUserPoints() async throws -> Int
-}
-
-class AvatarService: AvatarServiceProtocol {
+class AvatarService {
     static let shared = AvatarService()
+    private let itemApiService = ItemApiService.shared
     
     private init() {}
     
     // MARK: - Fetch Avatar Items
-    func fetchAvatarItems() async throws -> [AvatarItem] {
-        // 임시 데이터 - 실제로는 서버에서 가져와야 함
-        return [
-            // Hair items
+    func fetchAvatarItems(cursor: Int? = nil, itemType: ItemType, excludeMyItems:Bool=false) async throws -> CursorResult<AvatarItem> {
+        
+        let itemCursorResult = try await itemApiService.getItems(cursor: cursor, itemTypeId: itemType.id, excludeMyItems: excludeMyItems)
+        print(itemCursorResult.content.count)
+        
+        
+        return itemCursorResult.of { item in
             AvatarItem(
-                id: 1,
-                name: "기본 헤어",
-                itemType: .HAIR,
-                filePath: nil,
-                status: .EQUIPPED,
-                price: nil
-            ),
-            AvatarItem(
-                id: 2,
-                name: "스포츠 헤어",
-                itemType: .HAIR,
-                filePath: nil,
-                status: .NOT_OWNED,
-                price: 500
-            ),
-            AvatarItem(
-                id: 3,
-                name: "더벅머리",
-                itemType: .HAIR,
-                filePath: nil,
-                status: .OWNED,
-                price: nil
-            ),
-            
-            // Clothes items
-            AvatarItem(
-                id: 4,
-                name: "기본 티셔츠",
-                itemType: .CLOTH,
-                filePath: nil,
-                status: .EQUIPPED,
-                price: nil
-            ),
-            AvatarItem(
-                id: 5,
-                name: "운동복",
-                itemType: .CLOTH,
-                filePath: nil,
-                status: .OWNED,
-                price: nil
-            ),
-            
-            // Shoes items
-            AvatarItem(
-                id: 6,
-                name: "기본 운동화",
-                itemType: .PANTS,
-                filePath: nil,
-                status: .EQUIPPED,
-                price: nil
-            ),
-            AvatarItem(
-                id: 7,
-                name: "러닝화",
-                itemType: .PANTS,
-                filePath: nil,
-                status: .NOT_OWNED,
-                price: 800
+                id: item.id,
+                name: item.name,
+                itemType: ItemType.getItemType(item.itemType.id),
+                filePath: item.filePath,
+                unityFilePath: item.unityFilePath,
+                status: item.isOwned ? .OWNED : .NOT_OWNED ,
+                price: item.point
             )
-        ]
+        }
     }
     
     // MARK: - Equip Item

@@ -253,9 +253,11 @@ struct AvatarItemCard: View {
                         .frame(width: 120, height: 120)
                         .overlay(
                             Group {
-                                Image(systemName: "photo")
-//                                Image(item.name)
-                                    .font(CustomFont.custom(size: 40))
+                                Image(item.imagePath)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .padding(20)
                                     .foregroundColor(Color(hexCode: "CCCCCC"))
                                     .opacity(item.status == .notOwned ? 0.5 : 1.0)
                             }
@@ -285,12 +287,6 @@ struct AvatarItemCard: View {
                         .padding(8)
                     }
                 }
-                
-                // Item Name
-                Text(item.name)
-                    .font(CustomFont.custom(size: 12))
-                    .foregroundColor(textColor)
-                    .lineLimit(1)
             }
         }
         .buttonStyle(PlainButtonStyle())

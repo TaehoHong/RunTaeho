@@ -4,6 +4,7 @@ import Foundation
 struct AvatarItemViewModel: Identifiable {
     let id: Int
     let name: String
+    let imagePath: String
     let categoryName: String
     let isEquipped: Bool
     let isOwned: Bool
@@ -13,6 +14,7 @@ struct AvatarItemViewModel: Identifiable {
     init(from item: AvatarItem) {
         self.id = item.id
         self.name = item.name
+        self.imagePath = item.filePath + item.name
         self.categoryName = item.itemType.displayName
         self.isEquipped = item.status == .EQUIPPED
         self.isOwned = item.status == .OWNED || item.status == .EQUIPPED

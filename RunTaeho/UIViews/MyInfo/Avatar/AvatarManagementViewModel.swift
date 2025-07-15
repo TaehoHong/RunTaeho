@@ -22,12 +22,13 @@ class AvatarManagementViewModel: ObservableObject {
             currentPreviewItems = pendingEquippedItems
         }
     }
-    private var allAvatarItems: [AvatarItem] = []
     private let userStateManager = UserStateManager.shared
-    
-    // MARK: - Properties
-    private let avatarService: AvatarServiceProtocol
+    private var allAvatarItems: [AvatarItem] = UserStateManager.shared.equippedItems.map { $0.value }
+    private let avatarService = AvatarService.shared
     private var cancellables = Set<AnyCancellable>()
+    
+    private var cursor: Int? = nil
+    private var hasNextData: Bool = true
     
     var selectedCategory: ItemType {
         guard selectedCategoryIndex < categories.count else { return .HAIR }
@@ -59,10 +60,9 @@ class AvatarManagementViewModel: ObservableObject {
     }
     
     // MARK: - Init
-    init(avatarService: AvatarServiceProtocol = AvatarService.shared) {
-        self.avatarService = avatarService
+    init() {
         setupCategories()
-        loadAvatarData()
+        loadAvatarData(itemType: ItemType.HAIR)
     }
     
     // MARK: - Setup
@@ -71,16 +71,18 @@ class AvatarManagementViewModel: ObservableObject {
     }
     
     // MARK: - Methods
-    func loadAvatarData() {
-        isLoading = true
+    func loadAvatarData(itemType: ItemType) {
         errorMessage = nil
         
         Task {
             do {
-                let items = try await avatarService.fetchAvatarItems()
+                let itemCursorResult = try await avatarService.fetchAvatarItems(cursor: cursor, itemType: itemType)
                 
                 await MainActor.run {
-                    self.allAvatarItems = items
+                    self.allAvatarItems.append(contentsOf: itemCursorResult.content)
+                    self.cursor = itemCursorResult.cursor
+                    self.hasNextData = itemCursorResult.hasNext
+                    
                     self.updateItemViewModels()
                     self.updateEquippedItems()
                     // UserStateManager의 착용 상태로 초기화
@@ -92,8 +94,7 @@ class AvatarManagementViewModel: ObservableObject {
                 }
             } catch {
                 await MainActor.run {
-                    self.errorMessage = error.localizedDescription
-                    self.isLoading = false
+                    print("error :" + error.localizedDescription)
                 }
             }
         }

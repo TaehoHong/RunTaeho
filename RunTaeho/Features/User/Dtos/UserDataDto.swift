@@ -60,6 +60,7 @@ struct EquippedItemDataDto: Codable {
     let name: String
     let itemTypeId: Int
     let filePath: String
+    let unityFilePath: String
     
     public func toAvatarItem() -> AvatarItem {
         return AvatarItem(
@@ -67,6 +68,7 @@ struct EquippedItemDataDto: Codable {
             name: self.name,
             itemType: .getItemType(self.itemTypeId),
             filePath: self.filePath,
+            unityFilePath: self.unityFilePath,
             status: .EQUIPPED,
             price: nil
         )
