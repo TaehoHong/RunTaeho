@@ -72,12 +72,6 @@ struct UnityAvatarRepresentable: UIViewRepresentable {
         if(!unityAvatarDtos.isEmpty) {
             UnityService.shared.changeAvatar(unityAvatarDtos)
         }
-        
-        // 콘솔 로그로 확인
-        print("Updated avatar items: \(items.count) items")
-        for (type, item) in items {
-            print("  - \(type.rawValue): \(item.name)")
-        }
     }
 }
 

@@ -56,12 +56,14 @@ struct CategoryViewModel: Identifiable {
 struct PurchaseItemViewModel: Identifiable {
     let id: Int
     let name: String
+    let imagePath: String
     let categoryName: String
     let price: Int
     
     init(from item: AvatarItemViewModel) {
         self.id = item.id
         self.name = item.name
+        self.imagePath = item.imagePath
         self.categoryName = item.categoryName
         self.price = item.price ?? 0
     }
