@@ -1,78 +1,95 @@
 import SwiftUI
 import UIKit
 
-// MARK: - Unity Avatar View
-struct UnityAvatarView: UIViewControllerRepresentable {
+// MARK: - Unity Avatar View (SwiftUI)
+struct UnityAvatarView: View {
     let equippedItems: [ItemType: AvatarItem]
     
-    func makeUIViewController(context: Context) -> UnityAvatarViewController {
-        let controller = UnityAvatarViewController()
-        controller.updateEquippedItems(equippedItems)
-        return controller
-    }
-    
-    func updateUIViewController(_ uiViewController: UnityAvatarViewController, context: Context) {
-        // 착용 아이템이 변경될 때마다 Unity에 전달
-        uiViewController.updateEquippedItems(equippedItems)
+    var body: some View {
+        UnityAvatarRepresentable(equippedItems: equippedItems)
+            .aspectRatio(1.0, contentMode: .fit)
+            .background(Color.gray.opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+            )
     }
 }
 
-// MARK: - Unity Avatar View Controller
-class UnityAvatarViewController: UIViewController {
+// MARK: - Unity Avatar UIViewControllerRepresentable
+struct UnityAvatarRepresentable: UIViewRepresentable {
+    let equippedItems: [ItemType: AvatarItem]
+    @ObservedObject private var unity = Unity.shared
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        setupUnityView()
+    func makeUIView(context: Context) -> UIView {
+        // Unity View를 직접 반환
+        if let unityView = unity.view {
+            return unityView
+        } else {
+            // Unity가 아직 시작되지 않았을 때 임시 뷰
+            let placeholderView = UIView()
+            placeholderView.backgroundColor = .systemGray6
+            
+            let label = UILabel()
+            label.text = "Unity Loading..."
+            label.textAlignment = .center
+            label.font = .systemFont(ofSize: 16, weight: .medium)
+            label.textColor = .systemGray
+            label.translatesAutoresizingMaskIntoConstraints = false
+            
+            placeholderView.addSubview(label)
+            NSLayoutConstraint.activate([
+                label.centerXAnchor.constraint(equalTo: placeholderView.centerXAnchor),
+                label.centerYAnchor.constraint(equalTo: placeholderView.centerYAnchor)
+            ])
+            
+            return placeholderView
+        }
     }
     
-    private func setupUnityView() {
-        // Unity View 초기화 로직
-        // 실제 Unity 통합 시 구현 필요
-        view.backgroundColor = .systemGray6
+    func updateUIView(_ uiView: UIView, context: Context) {
+        // Unity가 로드되었고 착용 아이템이 변경될 때마다 Unity에 전달
+        updateEquippedItems(equippedItems)
     }
     
-    func updateEquippedItems(_ items: [ItemType: AvatarItem]) {
+    private func updateEquippedItems(_ items: [ItemType: AvatarItem]) {
+        guard unity.view != nil else { return }
+        
         // Unity로 착용 아이템 정보 전달
-//        var itemData: [Int: Int] = [:]
-//        
-//        for (category, item) in items {
-//            itemData[category.rawValue] = item.id
-//        }
-//        
-//        // Unity 메시지 전송
-//        sendMessageToUnity(method: "UpdateAvatarItems", data: itemData)
-    }
-    
-    private func sendMessageToUnity(method: String, data: [String: String]) {
-        // Unity와의 통신 구현
-        // 예: UnitySendMessage("AvatarManager", method, JSONString)
-        print("Sending to Unity - Method: \(method), Data: \(data)")
+        var unityAvatarDtos: [UnityAvatarDto] = []
+        
+        for (itemType, avatarItem) in items {
+            let dto = UnityAvatarDto(
+                name: avatarItem.name,
+                part: itemType.unityName,
+                itemPath: avatarItem.unityFilePath + avatarItem.name
+            )
+            unityAvatarDtos.append(dto)
+        }
+        
+        // Unity Service를 통해 아바타 변경
+        if(!unityAvatarDtos.isEmpty) {
+            UnityService.shared.changeAvatar(unityAvatarDtos)
+        }
+        
+        // 콘솔 로그로 확인
+        print("Updated avatar items: \(items.count) items")
+        for (type, item) in items {
+            print("  - \(type.rawValue): \(item.name)")
+        }
     }
 }
 
-// MARK: - Unity Communication Protocol
-protocol UnityAvatarCommunication {
-    func updateAvatarItem(category: String, itemId: String)
-    func updateAllAvatarItems(items: [String: String])
-    func playAnimation(animationName: String)
-    func resetAvatar()
-}
-
-// MARK: - Unity Message Handler
-extension UnityAvatarViewController: UnityAvatarCommunication {
-    func updateAvatarItem(category: String, itemId: String) {
-        sendMessageToUnity(method: "UpdateSingleItem", data: ["category": category, "itemId": itemId])
+// MARK: - Unity Avatar Preview Extensions
+extension UnityAvatarView {
+    // 애니메이션 컨트롤을 위한 메서드들
+    func playAnimation(_ animation: CharacterMotion) {
+        // Unity에 애니메이션 명령 전달
+        UnityService.shared.changeMotion(motion: animation)
     }
     
-    func updateAllAvatarItems(items: [String: String]) {
-        sendMessageToUnity(method: "UpdateAllItems", data: items)
-    }
-    
-    func playAnimation(animationName: String) {
-        sendMessageToUnity(method: "PlayAnimation", data: ["animation": animationName])
-    }
-    
-    func resetAvatar() {
-        sendMessageToUnity(method: "ResetAvatar", data: [:])
+    func resetToIdle() {
+        UnityService.shared.changeMotion(motion: .IDLE)
     }
 }

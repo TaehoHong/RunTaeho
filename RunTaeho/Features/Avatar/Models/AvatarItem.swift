@@ -35,6 +35,14 @@ enum ItemType: Int, CaseIterable, Codable {
         }
     }
     
+    var unityName: String {
+        switch self{
+        case .HAIR: return "Hair"
+        case .CLOTH: return "Cloth"
+        case .PANTS: return "Pant"
+        }
+    }
+    
     static func getItemType(_ val:Int) -> ItemType {
         return ItemType(rawValue: val)!
     }

@@ -14,7 +14,7 @@ class RunningViewModel: ObservableObject {
     private let timeManager = TimeManager()
     private let locationManager = LocationManager()
     public let statsManager = StatsManager()
-    private let charactorMoveMentService = CharactorMoveMentService.shared
+    private let unityService = UnityService.shared
     private let runningRecordService = RunningRecordService.shared
     private let runningRecordItemService = RunningRecordItemService.shared
     private let runningDataManager = RunningDataManager.shared
@@ -75,7 +75,7 @@ class RunningViewModel: ObservableObject {
         appState.setRunningState(.Running)
         timeManager.start()
         locationManager.startTracking()
-        charactorMoveMentService.moveCharactor(speed: 5.0)
+        unityService.moveCharactor(speed: 5.0)
         
         // 세그먼트 추적 초기화
         initializeSegmentTracking()
@@ -85,7 +85,7 @@ class RunningViewModel: ObservableObject {
         appState.setRunningState(.Paused)
         timeManager.pause()
         locationManager.pauseTracking()  // 위치 추적 일시정지
-        charactorMoveMentService.stopCharactor()
+        unityService.stopCharactor()
         
         print("⏸️ 러닝 일시정지")
     }
@@ -94,7 +94,7 @@ class RunningViewModel: ObservableObject {
         appState.setRunningState(.Running)
         timeManager.resume()
         locationManager.resumeTracking()  // 위치 추적 재개
-        charactorMoveMentService.moveCharactor(speed: 5.0)
+        unityService.moveCharactor(speed: 5.0)
         
         // 세그먼트 추적 재개
         resumeSegmentTracking()
@@ -131,7 +131,7 @@ class RunningViewModel: ObservableObject {
         appState.setRunningState(.Stopped)
         timeManager.stop()
         locationManager.stopTracking()
-        charactorMoveMentService.stopCharactor()
+        unityService.stopCharactor()
         
         // UI 상태 초기화
         distanceMeter = 0.0
@@ -189,7 +189,7 @@ class RunningViewModel: ObservableObject {
                 distanceMeter += locationManager.distanceDelta
                 
                 if locationManager.distanceDelta > 0 {
-                    charactorMoveMentService.moveCharactor(speed: statsManager.speed)
+                    unityService.moveCharactor(speed: statsManager.speed)
                 }
             }
         }

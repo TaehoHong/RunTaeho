@@ -25,6 +25,7 @@ class AvatarManagementViewModel: ObservableObject {
     private let userStateManager = UserStateManager.shared
     private var allAvatarItems: [AvatarItem] = UserStateManager.shared.equippedItems.map { $0.value }
     private let avatarService = AvatarService.shared
+    private let unityService = UnityService.shared
     private var cancellables = Set<AnyCancellable>()
     
     private var cursor: Int? = nil
@@ -115,6 +116,13 @@ class AvatarManagementViewModel: ObservableObject {
     
     func selectItem(_ itemViewModel: AvatarItemViewModel) {
         guard let item = allAvatarItems.first(where: { $0.id == itemViewModel.id }) else { return }
+        
+        let unityAvatarDto = UnityAvatarDto(
+            name: item.name,
+            part: item.itemType.unityName,
+            itemPath: item.unityFilePath + item.name
+        )
+        unityService.changeAvatar([unityAvatarDto])
         
         // 현재 카테고리에서 착용 중인 아이템과 같은 아이템을 선택하면 무시
         if pendingEquippedItems[item.itemType]?.id == item.id {
