@@ -5,7 +5,7 @@ class AvatarManagementViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published var categories: [CategoryViewModel] = []
     @Published var selectedCategoryIndex: Int = 0
-    @Published var items: [AvatarItemViewModel] = []
+    @Published var currentCategoryItems: [AvatarItemViewModel] = []
     @Published var isLoading = false
     @Published var totalPoint: Int = 0
     @Published var errorMessage: String?
@@ -23,7 +23,7 @@ class AvatarManagementViewModel: ObservableObject {
         }
     }
     private let userStateManager = UserStateManager.shared
-    private var allAvatarItems: [AvatarItem] = UserStateManager.shared.equippedItems.map { $0.value }
+    private var avatarItemsByCategory: [ItemType: [AvatarItem]] = [:]
     private let avatarService = AvatarService.shared
     private let unityService = UnityService.shared
     private var cancellables = Set<AnyCancellable>()
@@ -36,11 +36,6 @@ class AvatarManagementViewModel: ObservableObject {
         return categories[selectedCategoryIndex].itemType
     }
     
-    var filteredItems: [AvatarItemViewModel] {
-        items.filter { item in
-            allAvatarItems.first { $0.id == item.id }?.itemType == selectedCategory
-        }
-    }
     
     var hasChanges: Bool {
         // 현재 착용 상태와 UserStateManager의 착용 상태를 비교
@@ -80,12 +75,14 @@ class AvatarManagementViewModel: ObservableObject {
                 let itemCursorResult = try await avatarService.fetchAvatarItems(cursor: cursor, itemType: itemType)
                 
                 await MainActor.run {
-                    self.allAvatarItems.append(contentsOf: itemCursorResult.content)
+                    // 카테고리별로 데이터 저장
+                    self.avatarItemsByCategory[itemType] = (self.avatarItemsByCategory[itemType] ?? []) + itemCursorResult.content
                     self.cursor = itemCursorResult.cursor
                     self.hasNextData = itemCursorResult.hasNext
                     
-                    self.updateItemViewModels()
-                    self.updateEquippedItems()
+                    self.updateCurrentCategoryItems()
+                    pendingEquippedItems = userStateManager.equippedItems
+
                     // UserStateManager의 착용 상태로 초기화
                     self.pendingEquippedItems = self.userStateManager.equippedItems
                     self.totalPoint = self.userStateManager.totalPoint
@@ -101,8 +98,9 @@ class AvatarManagementViewModel: ObservableObject {
         }
     }
     
-    private func updateItemViewModels() {
-        items = allAvatarItems.map { AvatarItemViewModel(from: $0) }
+    private func updateCurrentCategoryItems() {
+        let categoryItems = avatarItemsByCategory[selectedCategory] ?? []
+        currentCategoryItems = categoryItems.map { AvatarItemViewModel(from: $0) }
     }
     
     private func getCurrentEquippedItems() -> [ItemType: AvatarItem] {
@@ -112,10 +110,11 @@ class AvatarManagementViewModel: ObservableObject {
     
     func selectCategory(at index: Int) {
         selectedCategoryIndex = index
+        updateCurrentCategoryItems()
     }
     
     func selectItem(_ itemViewModel: AvatarItemViewModel) {
-        guard let item = allAvatarItems.first(where: { $0.id == itemViewModel.id }) else { return }
+        guard let item = getAllAvatarItems().first(where: { $0.id == itemViewModel.id }) else { return }
         
         let unityAvatarDto = UnityAvatarDto(
             name: item.name,
@@ -137,7 +136,7 @@ class AvatarManagementViewModel: ObservableObject {
     }
     
     func isItemSelected(_ itemViewModel: AvatarItemViewModel) -> Bool {
-        guard let item = allAvatarItems.first(where: { $0.id == itemViewModel.id }) else { return false }
+        guard let item = getAllAvatarItems().first(where: { $0.id == itemViewModel.id }) else { return false }
         return pendingEquippedItems[item.itemType]?.id == item.id
     }
     
@@ -146,7 +145,7 @@ class AvatarManagementViewModel: ObservableObject {
         
         for (_, item) in pendingEquippedItems {
             // 원본 아이템 리스트에서 미보유 상태인지 확인
-            if let originalItem = allAvatarItems.first(where: { $0.id == item.id }),
+            if let originalItem = getAllAvatarItems().first(where: { $0.id == item.id }),
                originalItem.status == .NOT_OWNED {
                 itemsToPurchase.append(originalItem)
             }
@@ -179,21 +178,20 @@ class AvatarManagementViewModel: ObservableObject {
             }
             
             // 모든 아이템 구매
-            for item in itemsToPurchase {
-                do {
-                    let success = try await avatarService.purchaseItem(item)
-                    if !success {
-                        await MainActor.run {
-                            self.errorMessage = "\(item.name) 구매에 실패했습니다."
-                        }
-                        return
-                    }
-                } catch {
+            do {
+                let success = try await avatarService.purchaseItem(itemsToPurchase.map { item in item.id })
+                if !success {
                     await MainActor.run {
-                        self.errorMessage = "구매 중 오류가 발생했습니다."
+                        
+                        self.errorMessage = "\(itemsToPurchase.map { item in item.name }) 구매에 실패했습니다."
                     }
                     return
                 }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = "구매 중 오류가 발생했습니다."
+                }
+                return
             }
             
             // 모든 변경사항 적용
@@ -216,50 +214,58 @@ class AvatarManagementViewModel: ObservableObject {
         do {
             // 변경된 아이템만 서버에 전송하는 것이 아니라 
             // 전체 착용 상태를 한번에 업데이트하는 것이 일관성 있음
-            try await avatarService.updateEquippedItems(pendingEquippedItems)
+            try await avatarService.updateEquippedItems(userStateManager.avatarId, pendingEquippedItems.map { $0.value })
         } catch {
-            await MainActor.run {
-                self.errorMessage = "아이템 착용 상태 저장에 실패했습니다."
-            }
+            print("API 호출 에러: \(error)")
             return
         }
         
         // 상태 업데이트
+        print("MainActor.run 시작")
         await MainActor.run {
-            // 구매한 아이템 상태 변경
+            print("MainActor.run 내부 진입")
+            // 구매한 아이템들의 ID 저장
+            let purchasedItemIds = Set(purchasedItems.map { $0.id })
+            
+            // 구매한 아이템 포인트 차감
             for purchasedItem in purchasedItems {
-                if let index = allAvatarItems.firstIndex(where: { $0.id == purchasedItem.id }) {
-                    allAvatarItems[index].status = .OWNED
-                    if let price = purchasedItem.price {
-                        totalPoint -= price
-                        userStateManager.totalPoint -= price
-                    }
+                if let price = purchasedItem.price {
+                    totalPoint -= price
+                    userStateManager.totalPoint -= price
                 }
             }
             
-            // 착용 상태 업데이트
+            // 착용 상태 업데이트 (구매한 아이템은 바로 EQUIPPED로)
             for (category, item) in pendingEquippedItems {
                 // 기존 착용 아이템 해제
-                if let currentIndex = allAvatarItems.firstIndex(where: {
-                    $0.itemType == category && $0.status == .EQUIPPED && $0.id != item.id
-                }) {
-                    allAvatarItems[currentIndex].status = .OWNED
-                }
+                self.unequipItemsInCategory(category, except: item.id)
                 
-                // 새 아이템 착용
-                if let index = allAvatarItems.firstIndex(where: { $0.id == item.id }) {
-                    allAvatarItems[index].status = .EQUIPPED
+                // 새 아이템 착용 (구매한 아이템이면 바로 EQUIPPED로, 기존 보유 아이템도 EQUIPPED로)
+                if purchasedItemIds.contains(item.id) {
+                    // 구매한 아이템은 바로 EQUIPPED로 설정
+                    self.updateItemStatus(itemId: item.id, newStatus: .EQUIPPED)
+                } else {
+                    // 기존 보유 아이템도 EQUIPPED로 설정
+                    self.updateItemStatus(itemId: item.id, newStatus: .EQUIPPED)
                 }
             }
-            
-            // ViewModel 및 UserStateManager 업데이트
-            updateItemViewModels()
             
             // UserStateManager에 현재 착용 상태 저장
             userStateManager.equippedItems = pendingEquippedItems
             
+            // Unity 프리뷰 업데이트
+            currentPreviewItems = pendingEquippedItems
+            
+            // UI 갱신을 위해 현재 카테고리 아이템들을 강제로 새로고침
+            currentCategoryItems = []
+            let categoryItems = avatarItemsByCategory[selectedCategory] ?? []
+            currentCategoryItems = categoryItems.map { item in AvatarItemViewModel(from: item) }
+            
             // 구매 팝업 닫기
             showPurchaseConfirmation = false
+            
+            // UI 강제 업데이트
+            objectWillChange.send()
         }
     }
     
@@ -269,12 +275,28 @@ class AvatarManagementViewModel: ObservableObject {
         objectWillChange.send()
     }
     
-    private func updateEquippedItems() {
-        var equipped: [ItemType: AvatarItem] = [:]
-        for item in allAvatarItems where item.status == .EQUIPPED {
-            equipped[item.itemType] = item
+    // MARK: - Helper Methods
+    private func getAllAvatarItems() -> [AvatarItem] {
+        return avatarItemsByCategory.values.flatMap { $0 }
+    }
+    
+    private func updateItemStatus(itemId: Int, newStatus: ItemStatus) {
+        for (category, items) in avatarItemsByCategory {
+            if let index = items.firstIndex(where: { $0.id == itemId }) {
+                let oldStatus = avatarItemsByCategory[category]?[index].status
+                avatarItemsByCategory[category]?[index].status = newStatus
+                print("아이템 상태 업데이트: ID \(itemId), \(oldStatus) -> \(newStatus)")
+                break
+            }
         }
-        userStateManager.equippedItems = equipped
-        pendingEquippedItems = equipped
+    }
+    
+    private func unequipItemsInCategory(_ category: ItemType, except itemId: Int) {
+        guard let items = avatarItemsByCategory[category] else { return }
+        for (index, item) in items.enumerated() {
+            if item.status == .EQUIPPED && item.id != itemId {
+                avatarItemsByCategory[category]?[index].status = .OWNED
+            }
+        }
     }
 }

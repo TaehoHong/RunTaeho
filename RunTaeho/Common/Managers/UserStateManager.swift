@@ -14,6 +14,7 @@ class UserStateManager: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var authToken: String?
     @Published var refreshToken: String?
+    @Published var avatarId: Int = 0
     @Published var equippedItems: [ItemType: AvatarItem] = [:]
     
     // MARK: - User Preferences
@@ -62,6 +63,7 @@ class UserStateManager: ObservableObject {
             self.refreshToken = refreshToken
             self.isLoggedIn = true
             self.totalPoint = userData.totalPoint
+            self.avatarId = userData.avatarId
             self.equippedItems = userData.getEquippedItems()
             
             // Debug mode logging

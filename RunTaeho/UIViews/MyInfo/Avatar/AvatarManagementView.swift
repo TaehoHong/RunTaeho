@@ -54,7 +54,7 @@ struct AvatarManagementView: View {
             
             // Purchase Confirmation Popup
             if showPurchaseConfirmation {
-                PurchaseConfirmationPopup(
+                PurchaseView(
                     items: viewModel.itemsToPurchase,
                     userPoints: viewModel.totalPoint,
                     isPresented: $showPurchaseConfirmation,
@@ -81,33 +81,6 @@ struct AvatarManagementView: View {
              UnityAvatarView(equippedItems: viewModel.currentPreviewItems)
                 .frame(height: 300)
                 .cornerRadius(12)
-            
-            // Unity View가 준비될 때까지 임시 UI
-//            VStack {
-//                Image(systemName: "person.fill")
-//                    .font(CustomFont.custom(size: 80))
-//                    .foregroundColor(Color(hexCode: "E0E0E0"))
-//                    .padding(.bottom, 20)
-//                
-//                Text("Unity View")
-//                    .font(CustomFont.custom(size: 22))
-//                    .foregroundColor(Color(hexCode: "999999"))
-//                
-//                // 현재 선택된 아이템 표시 (디버깅용)
-//                if !viewModel.currentPreviewItems.isEmpty {
-//                    VStack(alignment: .leading, spacing: 4) {
-//                        Text("선택된 아이템:")
-//                            .font(CustomFont.custom(size: 12))
-//                            .foregroundColor(Color(hexCode: "666666"))
-//                        ForEach(Array(viewModel.currentPreviewItems.values)) { item in
-//                            Text("\(item.itemType.displayName): \(item.name)")
-//                                .font(CustomFont.custom(size: 10))
-//                                .foregroundColor(Color(hexCode: "999999"))
-//                        }
-//                    }
-//                    .padding(.top, 10)
-//                }
-//            }
         }
     }
     
@@ -136,7 +109,7 @@ struct AvatarManagementView: View {
                 GridItem(.flexible(), spacing: 15),
                 GridItem(.flexible(), spacing: 15)
             ], spacing: 15) {
-                ForEach(viewModel.filteredItems) { item in
+                ForEach(viewModel.currentCategoryItems) { item in
                     AvatarItemCard(
                         item: item,
                         isSelected: viewModel.isItemSelected(item),

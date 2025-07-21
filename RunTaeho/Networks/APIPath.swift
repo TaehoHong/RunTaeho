@@ -47,8 +47,20 @@ enum APIPath {
         }
     }
     
+    enum Avatar {
+        static let base = "api/v1/avatars"
+        static func put(_ id: Int) -> String {
+            return "\(base)/\(id)"
+        }
+    }
+    
     enum Item {
         static let base = "api/v1/items"
         static let list = base
+    }
+    
+    enum UserItem {
+        static let base = "api/v1/user-items"
+        static let post = base
     }
 }

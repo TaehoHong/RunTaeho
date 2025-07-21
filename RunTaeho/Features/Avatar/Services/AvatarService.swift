@@ -3,6 +3,8 @@ import Foundation
 class AvatarService {
     static let shared = AvatarService()
     private let itemApiService = ItemApiService.shared
+    private let userItemApiService = UserItemApiService.shared
+    private let avatarApiService = AvatarApiService.shared
     
     private init() {}
     
@@ -33,30 +35,20 @@ class AvatarService {
     }
     
     // MARK: - Update All Equipped Items
-    func updateEquippedItems(_ equippedItems: [ItemType: AvatarItem]) async throws {
-        // 서버에 전체 착용 상태를 한번에 업데이트
-        print("Updating all equipped items:")
-        for (category, item) in equippedItems {
-            print("  \(category): \(item.name)")
-        }
+    func updateEquippedItems(_ avatarId: Int, _ items: [AvatarItem]) async throws {
         
-        // 실제 서버 API 호출
-        // let response = try await networkService.post("/api/avatar/equip-all", body: equippedItems)
+        let avatar = try await avatarApiService.changeAvatarItems(avatarId: avatarId, itemIds: items.map{ $0.id })
     }
     
     // MARK: - Purchase Item
-    func purchaseItem(_ item: AvatarItem) async throws -> Bool {
-        // 서버에 구매 요청
-        // 성공/실패 여부 반환
-        guard let price = item.price else { return false }
-        
-        // 포인트 확인 로직
-        let currentPoints = try await getUserPoints()
-        if currentPoints >= price {
-            print("Purchasing item: \(item.name) for \(price) points")
+    func purchaseItem(_ itemIds: [Int]) async throws -> Bool {
+        do {
+            try await userItemApiService.purchaseItem(itemIds: itemIds)
             return true
+        } catch {
+            print(error)
+            return false
         }
-        return false
     }
     
     // MARK: - Get User Points

@@ -18,7 +18,6 @@ struct LoginView: View {
 
                 Button(action: {
                     print("[LoginView] Apple/Debug 버튼 클릭")
-                    viewModel.signInDebugg()
 //                    viewModel.signIn(with: .APPLE)
                 }) {
                     Image("appleid_button")

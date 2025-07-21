@@ -1,7 +1,7 @@
 import SwiftUI
 
 // MARK: - Main Purchase Confirmation Popup
-struct PurchaseConfirmationPopup: View {
+struct PurchaseView: View {
     @StateObject private var viewModel: PurchaseViewModel
     @Binding var isPresented: Bool
     let onPurchase: () -> Void

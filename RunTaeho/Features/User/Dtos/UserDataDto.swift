@@ -13,6 +13,7 @@ struct UserDataDto: Codable {
     let authorityType: String
     let totalPoint: Int
     let userAccounts: [UserAccountDataDto]
+    let avatarId: Int
     let equippedItems: [EquippedItemDataDto]
     
     

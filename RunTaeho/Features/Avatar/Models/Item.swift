@@ -14,8 +14,8 @@ struct Item: Codable {
     let itemType: ItemTypeDto
     let filePath: String
     let unityFilePath: String
-    var isOwned: Bool
-    let point: Int
+    var isOwned: Bool = true
+    var point: Int = 0
     
 }
 

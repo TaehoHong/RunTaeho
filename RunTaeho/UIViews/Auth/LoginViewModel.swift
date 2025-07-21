@@ -86,47 +86,6 @@ class LoginViewModel: ObservableObject {
         userStateManager.logout()
     }
     
-    /// 디버그 로그인
-    func signInDebugg() {
-        Task {
-            // 테스트용 사용자 데이터 생성
-            let debugUser = UserDataDto(
-                id: 1234,
-                name: "테스트 사용자",
-                authorityType: "USER",
-                totalPoint: 10000,
-                userAccounts: [
-                    UserAccountDataDto(
-                        id: 1,
-                        email: "debug@gmail.com",
-                        accountType: .GOOGLE
-                    ),
-                    UserAccountDataDto(
-                        id: 2,
-                        email: "debug@icloud.com",
-                        accountType: .APPLE
-                    )
-                ],
-                equippedItems: [
-                    EquippedItemDataDto(
-                        id: 1,
-                        name: "New_Hair_01",
-                        itemTypeId: 1,
-                        filePath: "items/Hair/",
-                        unityFilePath: "Assets/05.Resource/Hair/"
-                    )
-                ]
-            )
-            
-            // UserStateManager를 통해 로그인 처리
-            userStateManager.login(
-                userData: debugUser,
-                authToken: "debug_access_token",
-                refreshToken: "debug_refresh_token"
-            )
-        }
-    }
-    
     /// 사용 가능한 인증 제공자 목록 가져오기
     func getAvailableProviders() -> [AuthProvider] {
         return authContext.getAvailableProviders()
