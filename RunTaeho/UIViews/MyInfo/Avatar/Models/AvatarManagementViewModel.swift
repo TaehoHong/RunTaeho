@@ -115,13 +115,7 @@ class AvatarManagementViewModel: ObservableObject {
     
     func selectItem(_ itemViewModel: AvatarItemViewModel) {
         guard let item = getAllAvatarItems().first(where: { $0.id == itemViewModel.id }) else { return }
-        
-        let unityAvatarDto = UnityAvatarDto(
-            name: item.name,
-            part: item.itemType.unityName,
-            itemPath: item.unityFilePath + item.name
-        )
-        unityService.changeAvatar([unityAvatarDto])
+        unityService.changeAvatar([item.itemType:item])
         
         // 현재 카테고리에서 착용 중인 아이템과 같은 아이템을 선택하면 무시
         if pendingEquippedItems[item.itemType]?.id == item.id {

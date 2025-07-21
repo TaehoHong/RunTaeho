@@ -55,23 +55,7 @@ struct UnityAvatarRepresentable: UIViewRepresentable {
     
     private func updateEquippedItems(_ items: [ItemType: AvatarItem]) {
         guard unity.view != nil else { return }
-        
-        // Unity로 착용 아이템 정보 전달
-        var unityAvatarDtos: [UnityAvatarDto] = []
-        
-        for (itemType, avatarItem) in items {
-            let dto = UnityAvatarDto(
-                name: avatarItem.name,
-                part: itemType.unityName,
-                itemPath: avatarItem.unityFilePath + avatarItem.name
-            )
-            unityAvatarDtos.append(dto)
-        }
-        
-        // Unity Service를 통해 아바타 변경
-        if(!unityAvatarDtos.isEmpty) {
-            UnityService.shared.changeAvatar(unityAvatarDtos)
-        }
+        UnityService.shared.changeAvatar(items)
     }
 }
 

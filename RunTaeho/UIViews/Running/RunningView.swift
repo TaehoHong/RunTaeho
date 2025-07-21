@@ -22,7 +22,8 @@ struct RunningView: View {
                         }
 
                 case .Loaded : 
-                    let unityContainer = unity.view.flatMap({ UIViewContainer(containee: $0) }) 
+                    let unityContainer = unity.view.flatMap({ UIViewContainer(containee: $0) })
+                    let _ = UnityService.shared.changeAvatar(UserStateManager.shared.equippedItems)
                     GeometryReader { geometry in
                         let width = geometry.size.width
                         let height = geometry.size.height
