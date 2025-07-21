@@ -59,6 +59,12 @@ class AvatarManagementViewModel: ObservableObject {
     init() {
         setupCategories()
         loadAvatarData(itemType: ItemType.HAIR)
+        
+        // UserStateManager의 착용 상태로 초기화
+        self.pendingEquippedItems = self.userStateManager.equippedItems
+        self.totalPoint = self.userStateManager.totalPoint
+        // 초기 Unity View 업데이트를 위해 명시적으로 설정
+        self.currentPreviewItems = self.pendingEquippedItems
     }
     
     // MARK: - Setup
@@ -81,14 +87,6 @@ class AvatarManagementViewModel: ObservableObject {
                     self.hasNextData = itemCursorResult.hasNext
                     
                     self.updateCurrentCategoryItems()
-                    pendingEquippedItems = userStateManager.equippedItems
-
-                    // UserStateManager의 착용 상태로 초기화
-                    self.pendingEquippedItems = self.userStateManager.equippedItems
-                    self.totalPoint = self.userStateManager.totalPoint
-                    // 초기 Unity View 업데이트를 위해 명시적으로 설정
-                    self.currentPreviewItems = self.pendingEquippedItems
-                    self.isLoading = false
                 }
             } catch {
                 await MainActor.run {
@@ -110,7 +108,7 @@ class AvatarManagementViewModel: ObservableObject {
     
     func selectCategory(at index: Int) {
         selectedCategoryIndex = index
-        updateCurrentCategoryItems()
+        self.loadAvatarData(itemType: categories[selectedCategoryIndex].itemType)
     }
     
     func selectItem(_ itemViewModel: AvatarItemViewModel) {

@@ -16,8 +16,18 @@ class ItemApiService {
     
     
     func getItems(cursor: Int? = nil, itemTypeId:Int, excludeMyItems:Bool=false) async throws -> CursorResult<Item> {
+        
+        var params: [String: String] = [:]
+        
+        if let cursor = cursor {
+            params["cursor"] = String(cursor)
+        }
+        
+        params["itemTypeId"] = String(itemTypeId)
+        
         return try await HttpClient.get(
             urlPath: APIPath.Item.list,
+            requestParam: RequestParam(params: params),
             responseType: CursorResult<Item>.self
         )
     }
