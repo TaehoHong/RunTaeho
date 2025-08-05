@@ -1,5 +1,6 @@
 import SwiftUI
 import GoogleSignInSwift
+import AuthenticationServices
 
 struct LoginView: View {
     @StateObject private var viewModel = LoginViewModel()
@@ -16,15 +17,24 @@ struct LoginView: View {
                     })
                 .frame(width: 240, height: 38, alignment: .center)
 
-                Button(action: {
-                    print("[LoginView] Apple/Debug 버튼 클릭")
-//                    viewModel.signIn(with: .APPLE)
-                }) {
-                    Image("appleid_button")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 240, height: 38)
-                }
+                SignInWithAppleButton(
+                    .signIn,
+                    onRequest: { request in
+                        request.requestedScopes = [.fullName, .email]
+                    },
+                    onCompletion: { result in
+                        // ViewModel을 통해 Apple 결과 처리
+                        switch result {
+                              case .success(let authorization):
+                                AppleAuthenticationStrategy.shared.setAppleSignInResult(authorization)
+                                viewModel.signIn(with: .APPLE)
+                              case .failure(let error):
+                                AppleAuthenticationStrategy.shared.setAppleSignInError(error)
+                        }
+                    }
+                )
+                .signInWithAppleButtonStyle(.black)
+                .frame(width: 240, height: 38)
             }
             .frame(width: geometry.size.width, height: geometry.size.height * 0.5)
             .position(x: geometry.size.width / 2, y: geometry.size.height * 0.75)

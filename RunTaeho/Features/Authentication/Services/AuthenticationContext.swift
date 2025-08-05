@@ -9,7 +9,7 @@ class AuthenticationStrategyFactory {
         case .GOOGLE:
             return GoogleAuthenticationStrategy()
         case .APPLE:
-            return AppleAuthenticationStrategy()
+            return AppleAuthenticationStrategy.shared
         }
     }
     
@@ -34,24 +34,29 @@ class AuthenticationContext: ObservableObject {
     @Published var errorMessage: String?
     
     // MARK: - Private Properties
-    private var currentStrategy: AuthenticationStrategy?
+    private var _currentStrategy: AuthenticationStrategy?
+    
+    // MARK: - Public Properties
+    var currentStrategy: AuthenticationStrategy? {
+        return _currentStrategy
+    }
     private let userAccountService = UserAccountService.shared
     
     // MARK: - Public Methods
     
     /// 인증 전략 설정
     func setStrategy(_ strategy: AuthenticationStrategy) {
-        self.currentStrategy = strategy
+        self._currentStrategy = strategy
     }
     
     /// 제공자별 인증 전략 설정
     func setStrategy(for provider: AuthProvider) {
-        self.currentStrategy = AuthenticationStrategyFactory.createStrategy(for: provider)
+        self._currentStrategy = AuthenticationStrategyFactory.createStrategy(for: provider)
     }
     
     /// 로그인 수행
     func signIn() async throws -> UserAuthData? {
-        guard let strategy = currentStrategy else {
+        guard let strategy = _currentStrategy else {
             await MainActor.run {
                 self.errorMessage = "인증 전략이 설정되지 않았습니다."
             }
@@ -74,7 +79,7 @@ class AuthenticationContext: ObservableObject {
     
     /// 로그아웃 수행
     func signOut() {
-        guard let strategy = currentStrategy else {
+        guard let strategy = _currentStrategy else {
             self.errorMessage = "인증 전략이 설정되지 않았습니다."
             return
         }
@@ -90,14 +95,14 @@ class AuthenticationContext: ObservableObject {
     
     func disconnect() {
         
-        guard let strategy = currentStrategy else {
+        guard let strategy = _currentStrategy else {
             self.errorMessage = "인증 전략이 설정되지 않았습니다."
             return
         }
         
         do {
             try strategy.signOut()
-            userAccountService.disconnect(provider: currentStrategy!.authProvider)
+            userAccountService.disconnect(provider: _currentStrategy!.authProvider)
             
         } catch {
             self.errorMessage = error.localizedDescription
@@ -108,7 +113,7 @@ class AuthenticationContext: ObservableObject {
     
     /// 현재 로그인 상태 확인
     func checkSignInStatus() {
-        guard let strategy = currentStrategy else { return }
+        guard let strategy = _currentStrategy else { return }
     }
     
     /// 에러 메시지 클리어

@@ -31,6 +31,12 @@ class RunningViewModel: ObservableObject {
     @Published var showRecoveryAlert = false
     @Published var recoveryData: (record: RunningRecord, segments: [RunningRecordItem])? = nil
     
+    // 결과 화면 관련 상태
+    @Published var finishedRunningRecord: RunningRecord? = nil
+    @Published var earnedPoints: Int = 0
+    @Published var totalPoints: Int = 1000 // TODO: 실제 사용자 포인트로 대체
+    @Published var selectedShoe: Shoe? = nil
+    
     init() {
         timeManager.$elapsedSeconds
             .sink { [weak self] _ in
@@ -112,6 +118,11 @@ class RunningViewModel: ObservableObject {
             return
         }
         
+        // 결과 화면 데이터 설정
+        finishedRunningRecord = finalRecord
+        earnedPoints = calculateEarnedPoints(distance: finalRecord.distance)
+        loadSelectedShoe()
+        
         // 서버에 최종 데이터 전송
         uploadRunningDataToServer(record: finalRecord, segments: segments) { [weak self] success in
             DispatchQueue.main.async {
@@ -127,15 +138,11 @@ class RunningViewModel: ObservableObject {
             }
         }
         
-        // 상태 초기화
-        appState.setRunningState(.Stopped)
+        // 결과 화면 상태로 전환
+        appState.setRunningState(.Finished)
         timeManager.stop()
         locationManager.stopTracking()
         unityService.stopCharactor()
-        
-        // UI 상태 초기화
-        distanceMeter = 0.0
-        currentSegmentCount = 0
         
         print("🏁 러닝 종료")
     }
@@ -358,6 +365,38 @@ class RunningViewModel: ObservableObject {
     
     func hasActiveSession() -> Bool {
         return runningDataManager.hasActiveSession()
+    }
+    
+    // MARK: - 결과 화면 관련 메서드
+    
+    private func calculateEarnedPoints(distance: Double) -> Int {
+        // 1km당 50포인트 계산 (예시)
+        return Int(distance / 1000 * 50)
+    }
+    
+    private func loadSelectedShoe() {
+        // TODO: 실제 사용자의 메인 신발 정보 로드
+        selectedShoe = Shoe(
+            id: 1,
+            brand: "Nike",
+            model: "Air Zoom Pegasus 40",
+            totalDistance: 127,
+            isMain: true,
+            isEnabled: true
+        )
+    }
+    
+    func resetToStopped() {
+        appState.setRunningState(.Stopped)
+        
+        // UI 상태 초기화
+        distanceMeter = 0.0
+        currentSegmentCount = 0
+        finishedRunningRecord = nil
+        earnedPoints = 0
+        selectedShoe = nil
+        
+        print("🔄 러닝 상태 초기화")
     }
 }
 

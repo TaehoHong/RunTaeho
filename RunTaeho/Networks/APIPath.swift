@@ -3,6 +3,7 @@ import Foundation
 enum APIPath {
     enum Auth {
         static let googleOAuth = "api/v1/oauth/google"
+        static let appleOAuth = "api/v1/oauth/apple"
     }
     
     enum User {

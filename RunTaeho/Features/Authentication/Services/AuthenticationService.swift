@@ -7,9 +7,11 @@ class AuthenticationService {
     func getToken(provider: AuthProvider, code: String) async throws -> TokenDto {
         print("Getting token for \(provider.displayName) with code: \(code)")
         
+        let urlPath = getOAuthPath(for: provider)
+        
         return try await withCheckedThrowingContinuation { continuation in
             HTTPClient.shared.get(
-                urlPath: APIPath.Auth.googleOAuth,
+                urlPath: urlPath,
                 requestParam: RequestParam(params: ["code": code]),
                 responseType: TokenDto.self
             ) { result in
@@ -22,6 +24,15 @@ class AuthenticationService {
                     continuation.resume(throwing: AuthenticationError.networkError(error))
                 }
             }
+        }
+    }
+    
+    private func getOAuthPath(for provider: AuthProvider) -> String {
+        switch provider {
+        case .GOOGLE:
+            return APIPath.Auth.googleOAuth
+        case .APPLE:
+            return APIPath.Auth.appleOAuth
         }
     }
 }
