@@ -40,7 +40,8 @@ struct RunningFinishedView: View {
         ScrollView {
             VStack(spacing: 15) {
                 // Point Information Card
-                PointInformationCard(viewModel: viewModel)
+                PointEarnCard(viewModel: viewModel)
+//                PointInformationCard(viewModel: viewModel)
                 
                 // Main Distance Card
                 MainDistanceCard(viewModel: viewModel)
@@ -64,28 +65,28 @@ struct RunningFinishedView: View {
 }
 
 // MARK: - Component Views
-
-struct PointInformationCard: View {
-    @ObservedObject var viewModel: RunningFinishedViewModel
-    
-    var body: some View {
-        HStack {
-            Text(viewModel.earnedPointsText)
-                .font(CustomFont.custom(size: 18))
-                .foregroundColor(viewModel.earnedPointsColor)
-            
-            Spacer()
-            
-            Text(viewModel.totalPointsText)
-                .font(CustomFont.custom(size: 18))
-                .foregroundColor(.gray)
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 15)
-        .background(Color.white)
-        .cornerRadius(8)
-    }
-}
+//
+//struct PointInformationCard: View {
+//    @ObservedObject var viewModel: RunningFinishedViewModel
+//    
+//    var body: some View {
+//        HStack {
+//            Text(viewModel.earnedPointsText)
+//                .font(CustomFont.custom(size: 18))
+//                .foregroundColor(viewModel.earnedPointsColor)
+//            
+//            Spacer()
+//            
+//            Text(viewModel.totalPointsText)
+//                .font(CustomFont.custom(size: 18))
+//                .foregroundColor(.gray)
+//        }
+//        .padding(.horizontal, 20)
+//        .padding(.vertical, 15)
+//        .background(Color.white)
+//        .cornerRadius(8)
+//    }
+//}
 
 struct MainDistanceCard: View {
     @ObservedObject var viewModel: RunningFinishedViewModel
