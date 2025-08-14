@@ -34,8 +34,7 @@ class RunningViewModel: ObservableObject {
     // 결과 화면 관련 상태
     @Published var finishedRunningRecord: RunningRecord? = nil
     @Published var earnedPoints: Int = 0
-    @Published var totalPoints: Int = 1000 // TODO: 실제 사용자 포인트로 대체
-    @Published var selectedShoe: Shoe? = nil
+    @Published var totalPoints: Int = UserStateManager.shared.totalPoint
     
     init() {
         timeManager.$elapsedSeconds
@@ -121,7 +120,6 @@ class RunningViewModel: ObservableObject {
         // 결과 화면 데이터 설정
         finishedRunningRecord = finalRecord
         earnedPoints = calculateEarnedPoints(distance: finalRecord.distance)
-        loadSelectedShoe()
         
         // 서버에 최종 데이터 전송
         uploadRunningDataToServer(record: finalRecord, segments: segments) { [weak self] success in
@@ -151,7 +149,7 @@ class RunningViewModel: ObservableObject {
         Task {
             do {
                 // 세그먼트들을 서버에 업로드
-                try await runningRecordService.endRunning(runningRecord: record)
+                try await runningRecordService.update(runningRecord: record)
                 DispatchQueue.main.async {
                     completion(true)
                 }
@@ -203,7 +201,6 @@ class RunningViewModel: ObservableObject {
     }
     
     // MARK: - 세그먼트 관리
-    
     private func initializeSegmentTracking() {
         segmentStartTime = Date()
         segmentDistance = 0.0
@@ -348,11 +345,6 @@ class RunningViewModel: ObservableObject {
         print("❌ 세션 복구 거절")
     }
     
-    // 러닝 종료 시 최종 데이터 저장 (레거시 호환성)
-    func saveRunningData() {
-        print("⚠️ saveRunningData() 호출됨 - 새로운 시스템에서는 stopRunning()에서 자동 처리됨")
-    }
-    
     // MARK: - 현재 세션 정보
     
     func getCurrentSessionSummary() -> (distance: Double, segments: Int, duration: TimeInterval)? {
@@ -374,18 +366,6 @@ class RunningViewModel: ObservableObject {
         return Int(distance / 1000 * 50)
     }
     
-    private func loadSelectedShoe() {
-        // TODO: 실제 사용자의 메인 신발 정보 로드
-        selectedShoe = Shoe(
-            id: 1,
-            brand: "Nike",
-            model: "Air Zoom Pegasus 40",
-            totalDistance: 127,
-            isMain: true,
-            isEnabled: true
-        )
-    }
-    
     func resetToStopped() {
         appState.setRunningState(.Stopped)
         
@@ -394,16 +374,12 @@ class RunningViewModel: ObservableObject {
         currentSegmentCount = 0
         finishedRunningRecord = nil
         earnedPoints = 0
-        selectedShoe = nil
         
         print("🔄 러닝 상태 초기화")
     }
 }
 
-// ===== 삭제된 RunningViewModel의 CLLocationManagerDelegate 구현 =====
-// 기존 RunningViewModel의 CLLocationManagerDelegate 확장은 제거되었습니다.
-// LocationManager가 모든 위치 업데이트와 Delegate 메서드를 처리합니다.
-// ===================================================================
+
 
 // 디버깅용 Extension
 extension RunningViewModel {

@@ -7,9 +7,9 @@ class ShoeService {
     
     private init() {}
     
-    func fetchShoes(cursor: Int?=nil) async throws -> CursorResult<Shoe> {
+    func fetchShoes(cursor: Int?=nil, isEnabled: Bool?=nil) async throws -> CursorResult<Shoe> {
         
-        return try await shoeApiService.fetchShoesCursor(cursor: cursor)
+        return try await shoeApiService.fetchShoesCursor(cursor: cursor, isEnabled: isEnabled)
     }
     
     func addShoe(_ addShoeDto: AddShoeDto) async throws -> Shoe {

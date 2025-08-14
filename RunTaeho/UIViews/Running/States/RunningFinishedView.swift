@@ -14,7 +14,6 @@ struct RunningFinishedView: View {
                 runningRecord: record,
                 earnedPoints: viewModel.earnedPoints,
                 totalPoints: viewModel.totalPoints,
-                selectedShoe: viewModel.selectedShoe,
                 onComplete: {
                     viewModel.resetToStopped()
                 }
@@ -25,7 +24,6 @@ struct RunningFinishedView: View {
                 runningRecord: RunningRecord(id: 0),
                 earnedPoints: 0,
                 totalPoints: 0,
-                selectedShoe: nil,
                 onComplete: {
                     viewModel.resetToStopped()
                 }
@@ -64,29 +62,6 @@ struct RunningFinishedView: View {
     }
 }
 
-// MARK: - Component Views
-//
-//struct PointInformationCard: View {
-//    @ObservedObject var viewModel: RunningFinishedViewModel
-//    
-//    var body: some View {
-//        HStack {
-//            Text(viewModel.earnedPointsText)
-//                .font(CustomFont.custom(size: 18))
-//                .foregroundColor(viewModel.earnedPointsColor)
-//            
-//            Spacer()
-//            
-//            Text(viewModel.totalPointsText)
-//                .font(CustomFont.custom(size: 18))
-//                .foregroundColor(.gray)
-//        }
-//        .padding(.horizontal, 20)
-//        .padding(.vertical, 15)
-//        .background(Color.white)
-//        .cornerRadius(8)
-//    }
-//}
 
 struct MainDistanceCard: View {
     @ObservedObject var viewModel: RunningFinishedViewModel

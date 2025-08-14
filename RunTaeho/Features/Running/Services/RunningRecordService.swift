@@ -51,9 +51,9 @@ class RunningRecordService {
         return record
     }
     
-    func endRunning(runningRecord: RunningRecord) async throws {
+    func update(runningRecord: RunningRecord) async throws {
         
-        try await self.runningRecordApiService.endRunning(runningRecord: runningRecord)
+        try await self.runningRecordApiService.put(runningRecord: runningRecord)
     }
 }
 

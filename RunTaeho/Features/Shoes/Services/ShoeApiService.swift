@@ -7,11 +7,14 @@ class ShoeApiService {
     
     private init() {}
     
-    func fetchShoesCursor(cursor: Int? = nil, size: Int = 10) async throws -> CursorResult<Shoe> {
+    func fetchShoesCursor(cursor: Int? = nil, isEnabled: Bool? = nil, size: Int = 10) async throws -> CursorResult<Shoe> {
         
         var params: [String: String] = ["size": String(size)]
         if let cursor = cursor {
             params["cursor"] = String(cursor)
+        }
+        if let isEnabled = isEnabled {
+            params["isEnabled"] = String(isEnabled)
         }
         
         guard let authToken = userStateManager.authToken else {

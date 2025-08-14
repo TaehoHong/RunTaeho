@@ -7,8 +7,6 @@ class RunningFinishedViewModel: ObservableObject {
     @Published private(set) var calorieText: String = ""
     @Published private(set) var heartRateText: String = ""
     @Published private(set) var paceText: String = ""
-    @Published private(set) var earnedPointsText: String = ""
-    @Published private(set) var totalPointsText: String = ""
     @Published private(set) var shoeBrand: String = ""
     @Published private(set) var shoeModel: String = ""
     @Published private(set) var shoeTotalDistance: String = ""
@@ -18,22 +16,28 @@ class RunningFinishedViewModel: ObservableObject {
     @Published private(set) var availableShoes: [Shoe] = []
     @Published private(set) var selectedShoeIndex: Int = 0
     @Published private(set) var currentShoe: Shoe?
+    @Published private(set) var isLoadingShoes: Bool = false
+    @Published private(set) var shoeLoadError: String?
     
-    private let runningRecord: RunningRecord
-    private let earnedPoints: Int
-    private let totalPoints: Int
-    private let selectedShoe: Shoe?
+    public let earnedPoints: Int
+    public let totalPoints: Int
+    
+    private var runningRecord: RunningRecord
     private let onComplete: () -> Void
     
-    init(runningRecord: RunningRecord, earnedPoints: Int, totalPoints: Int, selectedShoe: Shoe? = nil, onComplete: @escaping () -> Void) {
+    private let shoeService = ShoeService.shared
+    private let runningRecordService = RunningRecordService.shared
+    
+    init(runningRecord: RunningRecord, earnedPoints: Int, totalPoints: Int, onComplete: @escaping () -> Void) {
         self.runningRecord = runningRecord
         self.earnedPoints = earnedPoints
         self.totalPoints = totalPoints
-        self.selectedShoe = selectedShoe
         self.onComplete = onComplete
         
         setupDisplayData()
-        loadAvailableShoes()
+        Task {
+            await loadAvailableShoes()
+        }
     }
     
     private func setupDisplayData() {
@@ -51,10 +55,6 @@ class RunningFinishedViewModel: ObservableObject {
         
         // Pace formatting
         paceText = formatPace(distance: runningRecord.distance, duration: runningRecord.durationSec)
-        
-        // Points formatting
-        earnedPointsText = "+\(earnedPoints)P"
-        totalPointsText = "\(totalPoints)P"
         
         // Shoe information - 현재 선택된 신발 정보 업데이트
         updateCurrentShoeInfo()
@@ -84,29 +84,40 @@ class RunningFinishedViewModel: ObservableObject {
     
     // MARK: - 신발 관련 메서드
     
-    private func loadAvailableShoes() {
-        // TODO: API 호출로 신발 목록 로드
-        // 임시 데이터로 대체
-        availableShoes = getSampleShoes()
-        
-        // 선택된 신발이 있으면 해당 인덱스로 설정
-        if let selectedShoe = selectedShoe,
-           let index = availableShoes.firstIndex(where: { $0.id == selectedShoe.id }) {
-            selectedShoeIndex = index
-        } else if !availableShoes.isEmpty {
-            selectedShoeIndex = 0
+    private func loadAvailableShoes() async {
+        await MainActor.run {
+            isLoadingShoes = true
+            shoeLoadError = nil
         }
         
-        updateCurrentShoeInfo()
-    }
-    
-    private func getSampleShoes() -> [Shoe] {
-        return [
-            Shoe(id: 1, brand: "Nike", model: "Air Zoom Pegasus 40", totalDistance: 127, isMain: true, isEnabled: true),
-            Shoe(id: 2, brand: "Adidas", model: "Ultraboost 22", totalDistance: 85, isMain: false, isEnabled: true),
-            Shoe(id: 3, brand: "ASICS", model: "Gel-Nimbus 25", totalDistance: 203, isMain: false, isEnabled: true),
-            Shoe(id: 4, brand: "New Balance", model: "Fresh Foam X 1080", totalDistance: 156, isMain: false, isEnabled: true)
-        ]
+        do {
+            var cursor: Int? = nil
+            var hasNext = true
+            var allShoes: [Shoe] = []
+            
+            while hasNext {
+                let shoePage = try await shoeService.fetchShoes(cursor: cursor, isEnabled: true)
+                allShoes.append(contentsOf: shoePage.content)
+                cursor = shoePage.cursor
+                hasNext = shoePage.hasNext
+            }
+            
+            await MainActor.run {
+                self.availableShoes = allShoes
+                self.selectedShoeIndex = self.availableShoes.firstIndex(where: { $0.isMain }) ?? 0
+                self.isLoadingShoes = false
+                self.updateCurrentShoeInfo()
+            }
+            
+        } catch {
+            await MainActor.run {
+                self.isLoadingShoes = false
+                self.shoeLoadError = "신발 정보를 불러오는데 실패했습니다: \(error.localizedDescription)"
+                // 에러 발생 시 샘플 데이터로 폴백
+                self.selectedShoeIndex = self.availableShoes.firstIndex(where: { $0.isMain }) ?? 0
+                self.updateCurrentShoeInfo()
+            }
+        }
     }
     
     private func updateCurrentShoeInfo() {
@@ -139,6 +150,18 @@ class RunningFinishedViewModel: ObservableObject {
     
     // MARK: - Actions
     func onCompleteButtonTapped() {
+        
+        self.runningRecord.shoeId = self.currentShoe?.id
+        
+            Task {
+                do {
+                    try await runningRecordService.update(runningRecord: self.runningRecord)
+                } catch {
+                    print("러닝 기록 업데이트 실패 - recordId: \(self.runningRecord.id), error:\(error)")
+                }
+            }
+        
+        
         onComplete()
     }
     
