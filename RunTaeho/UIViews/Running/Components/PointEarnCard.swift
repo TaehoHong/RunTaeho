@@ -3,159 +3,178 @@ import SwiftUI
 struct PointEarnCard: View {
     @ObservedObject var viewModel: RunningFinishedViewModel
     
-    @State private var totalPoints: Int = 0
+    @State private var animationPhase: AnimationPhase = .initial
     @State private var animatingPoints: Int = 0
-    @State private var showCenterAnimation: Bool = false
+    @State private var iconScale: CGFloat = 0.8
+    @State private var centerNumberScale: CGFloat = 0.5
+    @State private var centerNumberOpacity: Double = 0
+    @State private var centerNumberOffset: CGSize = .zero
+    @State private var centerNumberFontSize: CGFloat = 24
     @State private var showTotalPoints: Bool = false
-    @State private var animationComplete: Bool = false
-
+    
     private let containerWidth: CGFloat = 362
     private let containerHeight: CGFloat = 40
+    
+    init(viewModel: RunningFinishedViewModel) {
+        self.viewModel = viewModel
+        self.animatingPoints = viewModel.totalPoints - viewModel.earnedPoints
+    }
     
     var body: some View {
         ZStack {
             card
                 .frame(width: containerWidth, height: containerHeight)
-                .opacity(1)
-                .offset(y: 0)
                 .onAppear {
-                    startSequence()
+                    startAnimationSequence()
                 }
         }
     }
-
+    
     private var card: some View {
         ZStack {
-            // bg-gradient-to-r from-emerald-50 to-green-50 + border
+            // 배경 그라데이션
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(LinearGradient(
                     gradient: Gradient(colors: [
-                        Color(red: 0.95, green: 0.99, blue: 0.97), // emerald-50 유사
-                        Color(red: 0.93, green: 0.98, blue: 0.95)  // green-50 유사
+                        Color(red: 0.95, green: 0.99, blue: 0.97),
+                        Color(red: 0.93, green: 0.98, blue: 0.95)
                     ]),
                     startPoint: .leading,
                     endPoint: .trailing
                 ))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Color(red: 0.82, green: 0.97, blue: 0.90), lineWidth: 1) // emerald-100 유사
+                        .stroke(Color(red: 0.82, green: 0.97, blue: 0.90), lineWidth: 1)
                 )
-
+            
             HStack {
-                // 좌측: 포인트 획득 표시(아이콘 + 텍스트)
+                // 좌측: 포인트 획득 표시
                 HStack(spacing: 8) {
                     Image("PointIcon")
-                      .renderingMode(.original)   // 다색 유지
-                      .interpolation(.none)       // 최근접 보간
-                      .resizable()
-                      .frame(width: 20, height: 20)
-                      .scaleEffect(showCenterAnimation ? 1.0 : 0.8) // initial: 0.8 → 1
-                      .animation(.easeOut(duration: 0.5).delay(0.3), value: showCenterAnimation)
-
+                        .renderingMode(.original)
+                        .interpolation(.none)
+                        .resizable()
+                        .frame(width: 20, height: 20)
+                        .scaleEffect(iconScale)
+                        .animation(.easeOut(duration: 0.5), value: iconScale)
+                    
                     VStack(alignment: .leading, spacing: 2) {
                         Text("+\(viewModel.earnedPoints)P")
-                            .font(size: 14)
-                            .foregroundColor(Color(red: 0.12, green: 0.62, blue: 0.41)) // emerald-600
-
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(red: 0.12, green: 0.62, blue: 0.41))
+                        
                         Text("획득 포인트")
-                            .font(size: 11)
-                            .foregroundColor(Color(red: 0.20, green: 0.64, blue: 0.43)) // emerald-500
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(red: 0.20, green: 0.64, blue: 0.43))
                             .lineLimit(1)
                     }
                 }
-
+                
                 Spacer()
-
-                // 우측: 총 포인트 표시(TrendingUp 아이콘 + 텍스트)
+                
+                // 우측: 총 포인트 표시
                 if showTotalPoints {
                     HStack(spacing: 6) {
-                        // lucide-react TrendingUp 대체: SF Symbol
                         Image(systemName: "chart.line.uptrend.xyaxis")
-                            .font(size: 12)
+                            .font(.system(size: 12))
                             .foregroundColor(.gray)
-
+                        
                         VStack(alignment: .trailing, spacing: 2) {
-                            Text("\(totalPoints.formatted())P")
-                                .font(size: 13)
+                            Text("\(viewModel.totalPoints.formatted())P")
+                                .font(.system(size: 13))
                                 .foregroundColor(.gray)
                             Text("총 포인트")
-                                .font(size: 11)
+                                .font(.system(size: 11))
                                 .foregroundColor(.gray.opacity(0.7))
                                 .lineLimit(1)
                         }
                     }
-                    .transition(.opacity.animation(.easeIn(duration: 0.3)))
+                    .transition(.opacity)
+                    .animation(.easeIn(duration: 0.3), value: showTotalPoints)
                 }
             }
             .padding(.horizontal, 12)
             .frame(height: containerHeight)
-
+            
             // 중앙 숫자 애니메이션 레이어
-            if showCenterAnimation {
+            if animationPhase != .initial && animationPhase != .completed {
                 Text("\(animatingPoints.formatted())P")
-                    .font(size: animationComplete ? 14 : 24)
+                    .font(.system(size: centerNumberFontSize))
                     .foregroundColor(.gray)
-                    .opacity(1.0)
-                    .scaleEffect(1.0)
-                    .offset(x: animationComplete ? 140 : 0, y: animationComplete ? -5 : 0)
-                    .animation(nil, value: animatingPoints)
-                    .transition(.opacity)
-                    .onAppear {
-                        // 초기 페이드/스케일 인(React initial {opacity:0, scale:0.5} → animate {opacity:1, scale:1})
-                        // SwiftUI는 위에 직접 값 지정했으므로 생략, 필요 시 추가 가능
-                    }
-                    .animation(.easeInOut(duration: 0.8), value: animationComplete) // x/y & 폰트 크기 변화
+                    .opacity(centerNumberOpacity)
+                    .scaleEffect(centerNumberScale)
+                    .offset(centerNumberOffset)
+                    .animation(.easeInOut(duration: 0.8), value: centerNumberOffset)
+                    .animation(.easeInOut(duration: 0.8), value: centerNumberFontSize)
+                    .animation(.easeOut(duration: 0.3), value: centerNumberOpacity)
+                    .animation(.easeOut(duration: 0.5), value: centerNumberScale)
             }
         }
     }
-
-    private func startSequence() {
-        // 1초 후 시작(React 동일)
+    
+    private func startAnimationSequence() {
+        
+        // Phase 1: 초기 대기 (1초)
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            showCenterAnimation = true
-
-            // 2단계: 1000 → 1250 숫자 증가(1.5초, 60스텝 → 25ms 간격)
-            let duration: Double = 1.5
-            let steps: Int = 60
-            let interval: TimeInterval = duration / Double(steps)
-            let incrementPerStep: Double = Double(viewModel.earnedPoints) / Double(steps)
-            var current: Double = Double(viewModel.totalPoints - viewModel.earnedPoints)
-
-            // 타이머로 숫자 업데이트
-            var tick = 0
-            let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { t in
-                tick += 1
-                current += incrementPerStep
-                if current >= Double(viewModel.totalPoints) || tick >= steps {
+            // Phase 2: 중앙 애니메이션 표시
+            animationPhase = .showingCenter
+            iconScale = 1.0
+            centerNumberOpacity = 1.0
+            centerNumberScale = 1.0
+            
+            // Phase 3: 숫자 카운팅 시작 (0.3초 후)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                animationPhase = .countingUp
+                
+                // 1.5초 동안 숫자 증가 애니메이션
+                withAnimation(.easeInOut(duration: 1.5)) {
                     animatingPoints = viewModel.totalPoints
-                    t.invalidate()
-
-                    // 0.5초 대기 후 이동/축소 애니메이션 시작
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        withAnimation(.easeInOut(duration: 0.8)) {
-                            animationComplete = true
+                }
+                
+                // Phase 4: 위치 이동 (2초 후)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    animationPhase = .movingToCorner
+                    
+                    withAnimation(.easeInOut(duration: 0.8)) {
+                        centerNumberOffset = CGSize(width: 140, height: -5)
+                        centerNumberFontSize = 14
+                    }
+                    
+                    // Phase 5: 완료 및 총 포인트 표시 (0.8초 후)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                        showTotalPoints = true
+                        
+                        // 중앙 애니메이션 페이드아웃
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            centerNumberOpacity = 0
                         }
-
-                        // 이동 애니메이션 끝난 뒤 0.8초 후 총 포인트 갱신/표시
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                            totalPoints = viewModel.totalPoints
-                            withAnimation(.easeIn(duration: 0.3)) {
-                                showTotalPoints = true
-                            }
-                            // 중앙 애니메이션 제거(React: setShowCenterAnimation(false); setAnimationComplete(false))
-                            withAnimation(.easeOut(duration: 0.2)) {
-                                showCenterAnimation = false
-                                animationComplete = false
-                            }
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            animationPhase = .completed
                         }
                     }
-                } else {
-                    animatingPoints = Int(floor(current))
                 }
             }
-
-            // 런루프에 추가
-            RunLoop.current.add(timer, forMode: .common)
         }
     }
+}
+
+// Extension for number formatting
+extension Int {
+    func formatted() -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = ","
+        return formatter.string(from: NSNumber(value: self)) ?? "\(self)"
+    }
+}
+
+
+// 애니메이션 단계를 명확히 관리
+enum AnimationPhase {
+    case initial
+    case showingCenter
+    case countingUp
+    case movingToCorner
+    case completed
 }

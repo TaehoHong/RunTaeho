@@ -13,7 +13,6 @@ struct RunningFinishedView: View {
             self._viewModel = StateObject(wrappedValue: RunningFinishedViewModel(
                 runningRecord: record,
                 earnedPoints: viewModel.earnedPoints,
-                totalPoints: viewModel.totalPoints,
                 onComplete: {
                     viewModel.resetToStopped()
                 }
@@ -23,7 +22,6 @@ struct RunningFinishedView: View {
             self._viewModel = StateObject(wrappedValue: RunningFinishedViewModel(
                 runningRecord: RunningRecord(id: 0),
                 earnedPoints: 0,
-                totalPoints: 0,
                 onComplete: {
                     viewModel.resetToStopped()
                 }
@@ -39,7 +37,6 @@ struct RunningFinishedView: View {
             VStack(spacing: 15) {
                 // Point Information Card
                 PointEarnCard(viewModel: viewModel)
-//                PointInformationCard(viewModel: viewModel)
                 
                 // Main Distance Card
                 MainDistanceCard(viewModel: viewModel)

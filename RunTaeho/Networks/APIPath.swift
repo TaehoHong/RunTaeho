@@ -15,6 +15,9 @@ enum APIPath {
         static let base = "api/v1/running"
         static let search = base
         static let start = base
+        static func end(_ id: Int) -> String {
+            "\(base)/\(id)/end"
+        }
         static func put(_ id: Int) -> String {
             "\(base)/\(id)"
         }
@@ -31,6 +34,7 @@ enum APIPath {
     
     enum Point {
         static let base = "api/v1/users/points"
+        static let add = "api/v1/users/points"
         static let histories = "\(base)/histories"
     }
     

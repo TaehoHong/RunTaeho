@@ -21,6 +21,14 @@ class RunningRecordAPIService {
         return RunningRecord(id: recordId)
     }
     
+    func end(runningRecord: RunningRecord) async throws -> EndRunningRecord {
+        return try await httpClient.post(
+            urlPath: APIPath.RunningRecord.end(runningRecord.id),
+            body: runningRecord,
+            responseType: EndRunningRecord.self
+        )
+    }
+    
     func put(runningRecord: RunningRecord) async throws {
         try await httpClient.put(
             urlPath: APIPath.RunningRecord.put(runningRecord.id),

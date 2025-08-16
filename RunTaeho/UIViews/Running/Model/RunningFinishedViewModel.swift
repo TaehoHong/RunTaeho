@@ -28,10 +28,10 @@ class RunningFinishedViewModel: ObservableObject {
     private let shoeService = ShoeService.shared
     private let runningRecordService = RunningRecordService.shared
     
-    init(runningRecord: RunningRecord, earnedPoints: Int, totalPoints: Int, onComplete: @escaping () -> Void) {
+    init(runningRecord: RunningRecord, earnedPoints: Int, onComplete: @escaping () -> Void) {
         self.runningRecord = runningRecord
         self.earnedPoints = earnedPoints
-        self.totalPoints = totalPoints
+        self.totalPoints = UserStateManager.shared.totalPoint
         self.onComplete = onComplete
         
         setupDisplayData()

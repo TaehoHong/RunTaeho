@@ -34,7 +34,6 @@ class RunningViewModel: ObservableObject {
     // 결과 화면 관련 상태
     @Published var finishedRunningRecord: RunningRecord? = nil
     @Published var earnedPoints: Int = 0
-    @Published var totalPoints: Int = UserStateManager.shared.totalPoint
     
     init() {
         timeManager.$elapsedSeconds
@@ -118,63 +117,53 @@ class RunningViewModel: ObservableObject {
         }
         
         // 결과 화면 데이터 설정
-        finishedRunningRecord = finalRecord
-        earnedPoints = calculateEarnedPoints(distance: finalRecord.distance)
+        self.finishedRunningRecord = finalRecord
         
-        // 서버에 최종 데이터 전송
-        uploadRunningDataToServer(record: finalRecord, segments: segments) { [weak self] success in
-            DispatchQueue.main.async {
-                if success {
-                    // 서버 업로드 성공 시 로컬 저장
-                    self?.runningDataManager.saveCompletedRunningRecord(finalRecord, segments: segments)
-                    print("✅ 러닝 데이터 서버 업로드 및 로컬 저장 완료")
-                } else {
-                    // 서버 업로드 실패 시 로컬에만 저장
-                    self?.runningDataManager.saveCompletedRunningRecord(finalRecord, segments: segments)
-                    print("⚠️ 서버 업로드 실패, 로컬에만 저장됨")
-                }
-            }
-        }
+        Task { @MainActor in
+            // 서버에 최종 데이터 전송
+            let success = await uploadRunningDataToServer(record: finalRecord, segments: segments)
         
-        // 결과 화면 상태로 전환
-        appState.setRunningState(.Finished)
-        timeManager.stop()
-        locationManager.stopTracking()
-        unityService.stopCharactor()
-        
-        print("🏁 러닝 종료")
-    }
-    
-    private func uploadRunningDataToServer(record: RunningRecord, segments: [RunningRecordItem], completion: @escaping (Bool) -> Void) {
-        Task {
-            do {
-                // 세그먼트들을 서버에 업로드
-                try await runningRecordService.update(runningRecord: record)
-                DispatchQueue.main.async {
-                    completion(true)
-                }
-                
-            } catch {
-                print("❌ 서버 업로드 실패: \(error)")
-                DispatchQueue.main.async {
-                    completion(false)
-                }
+            if success {
+                self.runningDataManager.saveCompletedRunningRecord(finalRecord, segments: segments)
+                print("✅ 러닝 데이터 서버 업로드 및 로컬 저장 완료")
+            } else {
+                self.runningDataManager.saveCompletedRunningRecord(finalRecord, segments: segments)
+                print("⚠️ 서버 업로드 실패, 로컬에만 저장됨")
             }
             
+            // 결과 화면 상태로 전환
+            self.appState.setRunningState(.Finished)
+            self.timeManager.stop()
+            self.locationManager.stopTracking()
+            self.unityService.stopCharactor()
+            
+            print("🏁 러닝 종료")
+        }
+    }
+    
+    @MainActor
+    private func uploadRunningDataToServer(record: RunningRecord, segments: [RunningRecordItem]) async -> Bool {
+        // 1. runningRecordService.end를 await로 기다림 (동기적으로 처리)
+        do {
+            let endRunning = try await runningRecordService.end(runningRecord: record)
+                self.earnedPoints = endRunning.point - UserStateManager.shared.totalPoint
+                UserStateManager.shared.totalPoint = endRunning.point
+        } catch {
+            print("❌ 러닝 종료(end) 실패: \(error)")
+            return false
+        }
+
+        // 2. runningRecordItemService.saveAll은 비동기로 호출 (기다리지 않음)
+        Task.detached(priority: .background) {
             do {
-                // 세그먼트들을 서버에 업로드
-                try await runningRecordItemService.saveAll(runningRecordId: record.id, items: segments)
-                DispatchQueue.main.async {
-                    completion(true)
-                }
-                
+                try await self.runningRecordItemService.saveAll(runningRecordId: record.id, items: segments)
+                print("📤 세그먼트 비동기 업로드 완료")
             } catch {
-                print("❌ 세그먼트 업로드 실패: \(error)")
-                DispatchQueue.main.async {
-                    completion(false)
-                }
+                print("⚠️ 세그먼트 비동기 업로드 실패: \(error)")
             }
         }
+
+        return true
     }
     
     private func updateStats() {
@@ -357,13 +346,6 @@ class RunningViewModel: ObservableObject {
     
     func hasActiveSession() -> Bool {
         return runningDataManager.hasActiveSession()
-    }
-    
-    // MARK: - 결과 화면 관련 메서드
-    
-    private func calculateEarnedPoints(distance: Double) -> Int {
-        // 1km당 50포인트 계산 (예시)
-        return Int(distance / 1000 * 50)
     }
     
     func resetToStopped() {

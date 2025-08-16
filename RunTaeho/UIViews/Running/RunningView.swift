@@ -12,7 +12,7 @@ struct RunningView: View {
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             switch appState.viewState {
-                case .Loading : 
+                case .Loading :
                     LoadingView()
                         .onAppear {
                             DispatchQueue.main.async {
@@ -21,7 +21,7 @@ struct RunningView: View {
                             }
                         }
 
-                case .Loaded : 
+                case .Loaded :
                     let unityContainer = unity.view.flatMap({ UIViewContainer(containee: $0) })
                     let _ = UnityService.shared.changeAvatar(UserStateManager.shared.equippedItems)
                     GeometryReader { geometry in
@@ -98,4 +98,3 @@ struct ControlPanelView: View {
         }
     }
 }
-
