@@ -126,8 +126,13 @@ struct PointEarnCard: View {
     private func startAnimationSequence() {
         
         // Phase 1: 초기 대기 (1초)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             // Phase 2: 중앙 애니메이션 표시
+            // 시작값: 총포인트 - 획득포인트 (음수 방어)
+            let start = max(viewModel.totalPoints - viewModel.earnedPoints, 0)
+            withTransaction(Transaction(animation: nil)) { // 즉시 반영, 애니메이션 금지
+                animatingPoints = Double(start)
+            }
             animationPhase = .showingCenter
             iconScale = 1.0
             centerNumberOpacity = 1.0
@@ -136,11 +141,6 @@ struct PointEarnCard: View {
             // Phase 3: 숫자 카운팅 시작 (0.3초 후)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 animationPhase = .countingUp
-                
-                // 시작값: 총포인트 - 획득포인트 (음수 방어)
-                let start = max(viewModel.totalPoints - viewModel.earnedPoints, 0)
-                animatingPoints = Double(start)
-                
                 // 1.5초 동안 숫자 보간 (Double 기반)
                 withAnimation(.easeInOut(duration: 1.5)) {
                     animatingPoints = Double(viewModel.totalPoints)
