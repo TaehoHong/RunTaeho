@@ -4,7 +4,7 @@ struct PointEarnCard: View {
     @ObservedObject var viewModel: RunningFinishedViewModel
     
     @State private var animationPhase: AnimationPhase = .initial
-    @State private var animatingPoints: Int = 0
+    @State private var animatingPoints: Double = 0
     @State private var iconScale: CGFloat = 0.8
     @State private var centerNumberScale: CGFloat = 0.5
     @State private var centerNumberOpacity: Double = 0
@@ -17,7 +17,6 @@ struct PointEarnCard: View {
     
     init(viewModel: RunningFinishedViewModel) {
         self.viewModel = viewModel
-        self.animatingPoints = viewModel.totalPoints - viewModel.earnedPoints
     }
     
     var body: some View {
@@ -98,7 +97,7 @@ struct PointEarnCard: View {
             
             // 중앙 숫자 애니메이션 레이어
             if animationPhase != .initial && animationPhase != .completed {
-                Text("\(animatingPoints.formatted())P")
+                CountingText(value: animatingPoints)
                     .font(.system(size: centerNumberFontSize))
                     .foregroundColor(.gray)
                     .opacity(centerNumberOpacity)
@@ -109,6 +108,18 @@ struct PointEarnCard: View {
                     .animation(.easeOut(duration: 0.3), value: centerNumberOpacity)
                     .animation(.easeOut(duration: 0.5), value: centerNumberScale)
             }
+        }
+    }
+    
+    // A numeric-counting text that interpolates Double values
+    private struct CountingText: View, Animatable {
+        var value: Double
+        var animatableData: Double {
+            get { value }
+            set { value = newValue }
+        }
+        var body: some View {
+            Text("\(Int(value).formatted())P")
         }
     }
     
@@ -126,9 +137,13 @@ struct PointEarnCard: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 animationPhase = .countingUp
                 
-                // 1.5초 동안 숫자 증가 애니메이션
+                // 시작값: 총포인트 - 획득포인트 (음수 방어)
+                let start = max(viewModel.totalPoints - viewModel.earnedPoints, 0)
+                animatingPoints = Double(start)
+                
+                // 1.5초 동안 숫자 보간 (Double 기반)
                 withAnimation(.easeInOut(duration: 1.5)) {
-                    animatingPoints = viewModel.totalPoints
+                    animatingPoints = Double(viewModel.totalPoints)
                 }
                 
                 // Phase 4: 위치 이동 (2초 후)
