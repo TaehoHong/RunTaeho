@@ -15,9 +15,23 @@ class WatchDataProvider: NSObject {
     weak var delegate: WatchDataProviderDelegate?
     private var wcSession: WCSession?
     
+    // Performance optimization: Batch and throttle updates
+    private var pendingMessages: [String: Any] = [:]
+    private var messageTimer: Timer?
+    private let messageInterval: TimeInterval = 0.5 // Send batched messages every 0.5 seconds
+    private var lastHeartRateUpdate: Date = Date()
+    private var lastCadenceUpdate: Date = Date()
+    private let updateThreshold: TimeInterval = 0.3 // Minimum time between updates
+    
     var isWatchConnected: Bool {
         return wcSession?.isReachable ?? false
     }
+    
+    deinit {
+        messageTimer?.invalidate()
+        messageTimer = nil
+    }
+
     
     override init() {
         super.init()
@@ -35,7 +49,9 @@ class WatchDataProvider: NSObject {
     // MARK: - Watch Communication
     func startDataCollection() {
         guard let session = wcSession, session.isReachable else {
+            #if DEBUG
             print("Watch is not reachable")
+            #endif
             return
         }
         
@@ -44,10 +60,17 @@ class WatchDataProvider: NSObject {
             "types": ["heartRate", "cadence", "distance", "activeEnergy"]
         ]
         
+        // Start batch message timer
+        startMessageTimer()
+        
         session.sendMessage(message, replyHandler: { response in
+            #if DEBUG
             print("Watch responded: \(response)")
+            #endif
         }) { error in
+            #if DEBUG
             print("Failed to send start message to watch: \(error.localizedDescription)")
+            #endif
         }
     }
     
@@ -74,14 +97,49 @@ class WatchDataProvider: NSObject {
     func stopDataCollection() {
         guard let session = wcSession, session.isReachable else { return }
         
+        // Stop batch message timer
+        stopMessageTimer()
+        
         let message: [String: Any] = ["action": "stop"]
         
         session.sendMessage(message, replyHandler: nil) { error in
+            #if DEBUG
             print("Failed to send stop message to watch: \(error.localizedDescription)")
+            #endif
         }
     }
     
-    // MARK: - Request Current Data
+    // MARK: - Message Batching for Performance
+    private func startMessageTimer() {
+        stopMessageTimer() // Clear any existing timer
+        
+        messageTimer = Timer.scheduledTimer(withTimeInterval: messageInterval, repeats: true) { [weak self] _ in
+            self?.sendBatchedMessages()
+        }
+    }
+    
+    private func stopMessageTimer() {
+        messageTimer?.invalidate()
+        messageTimer = nil
+        pendingMessages.removeAll()
+    }
+    
+    private func sendBatchedMessages() {
+        guard !pendingMessages.isEmpty,
+              let session = wcSession,
+              session.isReachable else { return }
+        
+        let messagesToSend = pendingMessages
+        pendingMessages.removeAll()
+        
+        session.sendMessage(messagesToSend, replyHandler: nil) { error in
+            #if DEBUG
+            print("Failed to send batched messages: \(error.localizedDescription)")
+            #endif
+        }
+    }
+    
+    // MARK: - Request Current Data (Throttled)
     func requestCurrentHeartRate() {
         guard let session = wcSession, session.isReachable else { return }
         
@@ -158,16 +216,28 @@ extension WatchDataProvider: WCSessionDelegate {
     }
     
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
-        DispatchQueue.main.async {
-            // Handle incoming data from watch
+        // Performance: Process only significant updates
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            // Handle incoming data from watch with throttling
             if let heartRate = message["heartRate"] as? Double {
-                self.delegate?.didReceiveHeartRateData(heartRate)
+                let now = Date()
+                if now.timeIntervalSince(self.lastHeartRateUpdate) >= self.updateThreshold {
+                    self.delegate?.didReceiveHeartRateData(heartRate)
+                    self.lastHeartRateUpdate = now
+                }
             }
             
             if let cadence = message["cadence"] as? Double {
-                self.delegate?.didReceiveCadenceData(cadence)
+                let now = Date()
+                if now.timeIntervalSince(self.lastCadenceUpdate) >= self.updateThreshold {
+                    self.delegate?.didReceiveCadenceData(cadence)
+                    self.lastCadenceUpdate = now
+                }
             }
             
+            // Distance and energy don't need throttling as they update less frequently
             if let distance = message["distance"] as? Double {
                 self.delegate?.didReceiveDistanceData(distance)
             }
@@ -177,9 +247,11 @@ extension WatchDataProvider: WCSessionDelegate {
             }
             
             // Handle status messages
+            #if DEBUG
             if let status = message["status"] as? String {
                 print("Watch status: \(status)")
             }
+            #endif
         }
     }
     

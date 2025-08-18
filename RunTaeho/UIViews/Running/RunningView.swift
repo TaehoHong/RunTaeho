@@ -23,7 +23,6 @@ struct RunningView: View {
 
                 case .Loaded :
                     let unityContainer = unity.view.flatMap({ UIViewContainer(containee: $0) })
-                    let _ = UnityService.shared.changeAvatar(UserStateManager.shared.equippedItems)
                     GeometryReader { geometry in
                         let width = geometry.size.width
                         let height = geometry.size.height
@@ -32,13 +31,14 @@ struct RunningView: View {
                         unityContainer
                             .ignoresSafeArea()
                             .frame(width: width, height: height * 0.5, alignment: .top)
+                            .onAppear {
+                                UnityService.shared.changeAvatar(UserStateManager.shared.equippedItems)
+                            }
                         
                         DebugView(viewModel: viewModel)
 
                         VStack(spacing: 10) {
                             Spacer()
-                            
-                            // Control panel placed below UnityContainer
                             ControlPanelView(viewModel: viewModel, geometry: geometry)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)

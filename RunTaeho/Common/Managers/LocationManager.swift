@@ -9,6 +9,13 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     @Published var locationAuthStatus: String = "권한 상태 확인 전"
     @Published var locationAccuracy: Double = 0.0
     
+    // Performance optimization
+    private let minimumDistanceFilter: Double = 5.0 // meters
+    private let maximumAcceptableAccuracy: Double = 20.0 // meters
+    private var lastValidLocation: CLLocation?
+    private var consecutiveInvalidReadings: Int = 0
+    private let maxConsecutiveInvalidReadings: Int = 5
+    
     // 백그라운드 데이터 저장을 위한 프로퍼티
     private var allLocations: [CLLocation] = []
     private var totalDistance: Double = 0.0
@@ -31,7 +38,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         locationManager?.delegate = self
         locationManager?.desiredAccuracy = kCLLocationAccuracyBest
         locationManager?.activityType = .fitness
-        locationManager?.distanceFilter = 10
+        locationManager?.distanceFilter = minimumDistanceFilter
         
         // 백그라운드 위치 업데이트 설정
         locationManager?.allowsBackgroundLocationUpdates = true
@@ -90,15 +97,54 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last else { return }
+        // Performance optimization: Process only the most recent and accurate location
+        guard let location = locations.filter({ $0.horizontalAccuracy > 0 })
+                                     .sorted(by: { $0.horizontalAccuracy < $1.horizontalAccuracy })
+                                     .first else { return }
+        
         locationAccuracy = location.horizontalAccuracy
         
         // pause 상태에서는 위치 업데이트 무시
         guard isTracking else { return }
         
-        // 유효한 위치만 처리 (정확도 20m 이내)
-        guard location.horizontalAccuracy > 0 && location.horizontalAccuracy <= 20 else { return }
+        // Validate location accuracy
+        guard location.horizontalAccuracy <= maximumAcceptableAccuracy else {
+            consecutiveInvalidReadings += 1
+            
+            // If too many invalid readings, use last valid location
+            if consecutiveInvalidReadings >= maxConsecutiveInvalidReadings,
+               let lastValid = lastValidLocation {
+                // Fallback to last valid location for distance calculation
+                processValidLocation(lastValid)
+            }
+            return
+        }
         
+        // Reset invalid counter on valid reading
+        consecutiveInvalidReadings = 0
+        lastValidLocation = location
+        
+        // Check if movement is significant enough
+        if let previousLocation = previousLocation {
+            let distance = location.distance(from: previousLocation)
+            
+            // Skip minor movements (GPS jitter)
+            guard distance >= minimumDistanceFilter else { return }
+            
+            // Validate reasonable speed (max 30 km/h for running)
+            let timeDelta = location.timestamp.timeIntervalSince(previousLocation.timestamp)
+            let speed = (distance / timeDelta) * 3.6 // Convert to km/h
+            
+            guard speed <= 30.0 else {
+                print("⚠️ Unrealistic speed detected: \(speed) km/h, skipping location")
+                return
+            }
+        }
+        
+        processValidLocation(location)
+    }
+    
+    private func processValidLocation(_ location: CLLocation) {
         // 위치 저장
         allLocations.append(location)
         

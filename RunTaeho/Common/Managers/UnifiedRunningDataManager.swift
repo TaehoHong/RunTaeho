@@ -137,6 +137,11 @@ class UnifiedRunningDataManager: ObservableObject {
     @Published private(set) var activeDataSources: Set<DataSourceType> = []
     @Published private(set) var lastError: UnifiedDataManagerError?
     
+    // Performance optimization: Track if metrics actually changed
+    private var lastPublishedMetrics: RunningMetrics = .zero
+    private var metricsUpdateThreshold: TimeInterval = 0.5 // Minimum time between UI updates
+    private var lastUIUpdateTime: Date = Date()
+    
     // MARK: - Data Sources
     private let healthDataSource: HealthDataSource
     private let watchDataSource: WatchDataSource
@@ -152,10 +157,17 @@ class UnifiedRunningDataManager: ObservableObject {
     private var totalDistance: Double = 0.0
     private var lastUpdateTime: Date = Date()
     private var cancellables = Set<AnyCancellable>()
+    private var updateTimer: Timer?
+    private let updateQueue = DispatchQueue(label: "com.runtaeho.unified.update", qos: .userInitiated)
     
     // MARK: - Configuration
     private let updateInterval: TimeInterval = 1.0 // seconds
     private let userWeight: Double = 70.0 // kg - should come from user settings
+    
+    // Performance thresholds
+    private let minimumDistanceChange: Double = 0.5 // meters
+    private let minimumHeartRateChange: Int = 2 // BPM
+    private let minimumCadenceChange: Int = 5 // SPM
     
     // MARK: - Initialization
     init(healthDataManager: HealthDataManager? = nil, 
@@ -173,6 +185,9 @@ class UnifiedRunningDataManager: ObservableObject {
     
     deinit {
         stopTracking()
+        updateTimer?.invalidate()
+        updateTimer = nil
+        cancellables.removeAll()
     }
     
     // MARK: - Public Methods
@@ -214,10 +229,14 @@ class UnifiedRunningDataManager: ObservableObject {
             return .failure(.trackingNotActive)
         }
         
+        // Stop timer during pause to save resources
+        stopMetricsUpdateTimer()
+        
         // Pause data collection but keep sources active
         healthDataSource.pauseTracking()
         watchDataSource.pauseTracking()
         phoneDataSource.pauseTracking()
+        mockDataSource.pauseTracking()
         
         print("⏸️ Unified tracking paused")
         return .success(())
@@ -233,8 +252,12 @@ class UnifiedRunningDataManager: ObservableObject {
         healthDataSource.resumeTracking()
         watchDataSource.resumeTracking()
         phoneDataSource.resumeTracking()
+        mockDataSource.resumeTracking()
         
         lastUpdateTime = Date()
+        
+        // Restart timer after resume
+        startMetricsUpdateTimer()
         
         print("▶️ Unified tracking resumed")
         return .success(())
@@ -245,9 +268,13 @@ class UnifiedRunningDataManager: ObservableObject {
         
         isTrackingActive = false
         
+        // Stop timer first to prevent further updates
+        stopMetricsUpdateTimer()
+        
         healthDataSource.stopTracking()
         watchDataSource.stopTracking()
         phoneDataSource.stopTracking()
+        mockDataSource.stopTracking()
         
         activeDataSources.removeAll()
         
@@ -256,11 +283,8 @@ class UnifiedRunningDataManager: ObservableObject {
     
     // MARK: - Data Source Management
     private func setupDataSourceObservers() {
-        // Observe changes from all data sources
-        Timer.scheduledTimer(withTimeInterval: updateInterval, repeats: true) { [weak self] _ in
-            guard let self = self, self.isTrackingActive else { return }
-            self.updateMetrics()
-        }
+        // Timer will be created when tracking starts
+        // This prevents timer from running when not needed
     }
     
     private func updateActiveDataSources() {
@@ -270,21 +294,54 @@ class UnifiedRunningDataManager: ObservableObject {
     }
     
     private func startMetricsUpdateTimer() {
-        // Real-time updates while tracking
+        // Cancel any existing timer
+        updateTimer?.invalidate()
+        
+        // Create new timer with weak self to prevent retain cycle
+        updateTimer = Timer.scheduledTimer(withTimeInterval: updateInterval, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            
+            self.updateQueue.async { [weak self] in
+                guard let self = self, self.isTrackingActive else { return }
+                self.updateMetrics()
+            }
+        }
+        
+        // Ensure timer runs in common modes for background operation
+        if let timer = updateTimer {
+            RunLoop.current.add(timer, forMode: .common)
+        }
+    }
+    
+    private func stopMetricsUpdateTimer() {
+        updateTimer?.invalidate()
+        updateTimer = nil
     }
     
     // MARK: - Metrics Calculation
     private func updateMetrics() {
-        updateActiveDataSources()
+        // Only update active data sources if needed (every 5 seconds)
+        if Date().timeIntervalSince(lastUpdateTime) > 5.0 {
+            updateActiveDataSources()
+        }
         
         let heartRate = getBestDataForHeartRate()
         let cadence = getBestDataForCadence()
         let distance = getBestDataForDistance()
         
-        // Update total distance
+        // Check if values changed significantly
+        let heartRateChanged = abs(heartRate - currentMetrics.heartRate) >= minimumHeartRateChange
+        let cadenceChanged = abs(cadence - currentMetrics.cadence) >= minimumCadenceChange
+        
+        // Update total distance only if change is significant
         let distanceDelta = distance - currentMetrics.distance
-        if distanceDelta > 0 {
+        if distanceDelta > minimumDistanceChange {
             totalDistance += distanceDelta
+        }
+        
+        // Skip calculation if no significant changes
+        if !heartRateChanged && !cadenceChanged && distanceDelta < minimumDistanceChange {
+            return
         }
         
         // Calculate derived metrics
@@ -304,46 +361,79 @@ class UnifiedRunningDataManager: ObservableObject {
             timestamp: Date()
         )
         
-        // Update on main thread
-        DispatchQueue.main.async {
-            self.currentMetrics = newMetrics
+        // Only update UI if metrics changed significantly or enough time passed
+        let shouldUpdateUI = newMetrics != lastPublishedMetrics ||
+                           Date().timeIntervalSince(lastUIUpdateTime) >= metricsUpdateThreshold
+        
+        if shouldUpdateUI {
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                self.currentMetrics = newMetrics
+                self.lastPublishedMetrics = newMetrics
+                self.lastUIUpdateTime = Date()
+            }
         }
         
         lastUpdateTime = Date()
     }
     
     // MARK: - Data Source Selection Logic
+    // Cache for data source availability to reduce repeated checks
+    private var sourceAvailabilityCache: [DataSourceType: Bool] = [:]
+    private var cacheUpdateTime: Date = Date()
+    private let cacheValidityDuration: TimeInterval = 2.0
+    
+    private func updateSourceAvailabilityCache() {
+        guard Date().timeIntervalSince(cacheUpdateTime) > cacheValidityDuration else { return }
+        
+        sourceAvailabilityCache.removeAll()
+        for source in allDataSources {
+            sourceAvailabilityCache[source.sourceType] = source.isAvailable
+        }
+        cacheUpdateTime = Date()
+    }
+    
     private func getBestDataForHeartRate() -> Int {
+        updateSourceAvailabilityCache()
+        
         for sourceType in DataSourcePriority.heartRate {
-            if let source = getDataSource(for: sourceType), source.isAvailable {
-                let value = source.heartRate
-                if value > 0 {
-                    return Int(value)
-                }
+            // Use cached availability check
+            guard sourceAvailabilityCache[sourceType] == true,
+                  let source = getDataSource(for: sourceType) else { continue }
+            
+            let value = source.heartRate
+            if value > 0 {
+                return Int(value)
             }
         }
-        return 0
+        return currentMetrics.heartRate // Return last known value instead of 0
     }
     
     private func getBestDataForCadence() -> Int {
+        updateSourceAvailabilityCache()
+        
         for sourceType in DataSourcePriority.cadence {
-            if let source = getDataSource(for: sourceType), source.isAvailable {
-                let value = source.cadence
-                if value > 0 {
-                    return Int(value)
-                }
+            guard sourceAvailabilityCache[sourceType] == true,
+                  let source = getDataSource(for: sourceType) else { continue }
+            
+            let value = source.cadence
+            if value > 0 {
+                return Int(value)
             }
         }
-        return 0
+        return currentMetrics.cadence // Return last known value instead of 0
     }
     
     private func getBestDataForDistance() -> Double {
+        updateSourceAvailabilityCache()
+        
         for sourceType in DataSourcePriority.distance {
-            if let source = getDataSource(for: sourceType), source.isAvailable {
-                let value = source.distance
-                if value > 0 {
-                    return value
-                }
+            guard sourceAvailabilityCache[sourceType] == true,
+                  let source = getDataSource(for: sourceType) else { continue }
+            
+            let value = source.distance
+            if value > 0 {
+                return value
             }
         }
         return currentMetrics.distance
@@ -362,26 +452,75 @@ class UnifiedRunningDataManager: ObservableObject {
         }
     }
     
-    // MARK: - Calculations
+    // MARK: - Calculations (Optimized)
+    // Cache for expensive calculations
+    private var lastCalorieCalculationTime: TimeInterval = 0
+    private var lastCalorieValue: Double = 0
+    
     private func calculatePace(distance: Double, time: TimeInterval) -> RunningMetrics.PaceData {
-        guard distance > 0 else {
-            return RunningMetrics.PaceData(totalSeconds: 0)
+        guard distance > 0 && time > 0 else {
+            return currentMetrics.pace // Return last known pace instead of zero
         }
         
-        let paceSeconds = (time / distance) * 1000 // pace per kilometer
+        let distanceInKm = distance / 1000.0
+        guard distanceInKm > 0 else {
+            return currentMetrics.pace
+        }
+        
+        let paceSeconds = time / distanceInKm // seconds per kilometer
+        
+        // Validate pace is reasonable (between 3:00 and 15:00 per km)
+        if paceSeconds < 180 || paceSeconds > 900 {
+            return currentMetrics.pace // Return last known valid pace
+        }
+        
         return RunningMetrics.PaceData(totalSeconds: paceSeconds)
     }
     
     private func calculateSpeed(distance: Double, time: TimeInterval) -> Double {
-        guard time > 0 else { return 0.0 }
-        return (distance / time) * 3.6 // m/s to km/h
+        guard time > 0 && distance >= 0 else { return currentMetrics.speed }
+        
+        let speed = (distance / time) * 3.6 // m/s to km/h
+        
+        // Validate speed is reasonable (0-30 km/h for running)
+        guard speed >= 0 && speed <= 30 else {
+            return currentMetrics.speed // Return last known valid speed
+        }
+        
+        return speed
     }
     
     private func calculateCalories(time: TimeInterval) -> Double {
-        // MET calculation: MET * weight(kg) * time(hours)
-        let runningMET = 9.8 // Average for 8km/h running
+        // Cache calories calculation (update every 10 seconds)
+        if abs(time - lastCalorieCalculationTime) < 10 && lastCalorieValue > 0 {
+            return lastCalorieValue
+        }
+        
+        // Dynamic MET based on speed
+        let speed = currentMetrics.speed
+        let runningMET: Double
+        
+        switch speed {
+        case 0..<6:
+            runningMET = 6.0  // Slow jog
+        case 6..<8:
+            runningMET = 8.3  // Light running
+        case 8..<10:
+            runningMET = 9.8  // Moderate running
+        case 10..<12:
+            runningMET = 11.0 // Fast running
+        default:
+            runningMET = 12.5 // Very fast running
+        }
+        
         let hours = time / 3600.0
-        return runningMET * userWeight * hours
+        let calories = runningMET * userWeight * hours
+        
+        // Update cache
+        lastCalorieCalculationTime = time
+        lastCalorieValue = calories
+        
+        return calories
     }
     
     // MARK: - Debug Information
@@ -503,6 +642,10 @@ private class PhoneDataSource: RunningDataSourceProtocol {
         self.locationManager = locationManager
     }
     
+    deinit {
+        pedometer.stopUpdates()
+    }
+    
     func startTracking() {
         locationManager?.startTracking()
         startPedometerTracking()
@@ -546,31 +689,51 @@ private class MockDataSource: RunningDataSourceProtocol {
     let sourceType: DataSourceType = .mock
     
     private var isTracking = false
+    private var isPaused = false
     private var timer: Timer?
+    
+    deinit {
+        stopTracking()
+    }
     
     func startTracking() {
         isTracking = true
+        isPaused = false
+        stopTimer() // Clear any existing timer
+        
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.generateMockData()
         }
     }
     
     func pauseTracking() {
-        // Keep generating data but mark as paused if needed
+        isPaused = true
+        stopTimer() // Stop timer during pause to save resources
     }
     
     func resumeTracking() {
-        // Resume normal operation
+        guard isTracking else { return }
+        isPaused = false
+        
+        // Restart timer
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.generateMockData()
+        }
     }
     
     func stopTracking() {
         isTracking = false
-        timer?.invalidate()
-        timer = nil
+        isPaused = false
+        stopTimer()
         
         heartRate = 0.0
         cadence = 0.0
         distance = 0.0
+    }
+    
+    private func stopTimer() {
+        timer?.invalidate()
+        timer = nil
     }
     
     private func generateMockData() {
