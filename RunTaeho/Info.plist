@@ -29,6 +29,14 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
+		<string>background-app-refresh</string>
+		<string>fetch</string>
 	</array>
+	<key>NSHealthShareUsageDescription</key>
+	<string>RunTaeho needs access to your health data to track your running metrics including heart rate, distance, and cadence.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>RunTaeho needs to update your health data with workout information.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>RunTaeho needs access to motion data to track your running cadence and activity.</string>
 </dict>
 </plist>

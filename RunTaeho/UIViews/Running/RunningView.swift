@@ -33,7 +33,7 @@ struct RunningView: View {
                             .ignoresSafeArea()
                             .frame(width: width, height: height * 0.5, alignment: .top)
                         
-//                        DebugView(viewModel: viewModel)
+                        DebugView(viewModel: viewModel)
 
                         VStack(spacing: 10) {
                             Spacer()

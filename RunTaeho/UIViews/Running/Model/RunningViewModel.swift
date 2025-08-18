@@ -13,7 +13,13 @@ class RunningViewModel: ObservableObject {
     private var previousElapedSeconds: Int = 0
     private let timeManager = TimeManager()
     private let locationManager = LocationManager()
-    public let statsManager = StatsManager()
+    private let healthDataManager = HealthDataManager()
+    private let watchDataProvider = WatchDataProvider()
+    lazy var unifiedDataManager = UnifiedRunningDataManager(
+        healthDataManager: healthDataManager,
+        watchDataProvider: watchDataProvider,
+        locationManager: locationManager
+    )
     private let unityService = UnityService.shared
     private let runningRecordService = RunningRecordService.shared
     private let runningRecordItemService = RunningRecordItemService.shared
@@ -49,6 +55,20 @@ class RunningViewModel: ObservableObject {
         checkForTempData()
     }
     
+    // MARK: - Unified Data Properties
+    var currentMetrics: RunningMetrics { unifiedDataManager.currentMetrics }
+    var activeDataSources: Set<DataSourceType> { unifiedDataManager.activeDataSources }
+    var isWatchConnected: Bool { activeDataSources.contains(.watch) }
+    var isHealthKitAuthorized: Bool { activeDataSources.contains(.healthKit) }
+    
+    // Computed properties for backward compatibility
+    var heartRate: Double { Double(currentMetrics.heartRate) }
+    var cadence: Double { Double(currentMetrics.cadence) }
+    var pace: (minutes: Int, seconds: Int) { (currentMetrics.pace.minutes, currentMetrics.pace.seconds) }
+    var speed: Double { currentMetrics.speed }
+    var calories: Double { currentMetrics.calories }
+    
+    // Location data access
     var locationAuthStatus: String { locationManager.locationAuthStatus }
     var locationAccuracy: Double { locationManager.locationAccuracy }
     
@@ -76,31 +96,46 @@ class RunningViewModel: ObservableObject {
         runningDataManager.startNewRunningSession(record: record)
         
         // 3. 러닝 시작
-        appState.setRunningState(.Running)
-        timeManager.start()
-        locationManager.startTracking()
-        unityService.moveCharactor(speed: 5.0)
+        let trackingResult = unifiedDataManager.startTracking()
         
-        // 세그먼트 추적 초기화
-        initializeSegmentTracking()
+        switch trackingResult {
+        case .success:
+            appState.setRunningState(.Running)
+            timeManager.start()
+            unityService.moveCharactor(speed: 5.0)
+            initializeSegmentTracking()
+            print("✅ Running started successfully")
+            
+        case .failure(let error):
+            print("❌ Failed to start tracking: \(error.localizedDescription)")
+            // Handle error - maybe show alert to user
+            return
+        }
     }
     
     func pauseRunning() {
         appState.setRunningState(.Paused)
         timeManager.pause()
-        locationManager.pauseTracking()  // 위치 추적 일시정지
-        unityService.stopCharactor()
         
+        let result = unifiedDataManager.pauseTracking()
+        if case .failure(let error) = result {
+            print("⚠️ Failed to pause tracking: \(error.localizedDescription)")
+        }
+        
+        unityService.stopCharactor()
         print("⏸️ 러닝 일시정지")
     }
     
     func resumeRunning() {
         appState.setRunningState(.Running)
         timeManager.resume()
-        locationManager.resumeTracking()  // 위치 추적 재개
-        unityService.moveCharactor(speed: 5.0)
         
-        // 세그먼트 추적 재개
+        let result = unifiedDataManager.resumeTracking()
+        if case .failure(let error) = result {
+            print("⚠️ Failed to resume tracking: \(error.localizedDescription)")
+        }
+        
+        unityService.moveCharactor(speed: speed)
         resumeSegmentTracking()
         
         print("▶️ 러닝 재개")
@@ -134,7 +169,7 @@ class RunningViewModel: ObservableObject {
             // 결과 화면 상태로 전환
             self.appState.setRunningState(.Finished)
             self.timeManager.stop()
-            self.locationManager.stopTracking()
+            self.unifiedDataManager.stopTracking() // 통합 데이터 매니저 종료
             self.unityService.stopCharactor()
             
             print("🏁 러닝 종료")
@@ -170,20 +205,20 @@ class RunningViewModel: ObservableObject {
         if appState.runningState == .Running {
             elapsedTime = timeManager.elapsedTime
             
-            if locationManager.isRecived {
-                let durationSeconds = timeManager.elapsedSeconds - previousElapedSeconds
-                statsManager.updateStats(distance: locationManager.distanceDelta, elapsedSeconds: durationSeconds)
-                previousElapedSeconds = timeManager.elapsedSeconds
-                locationManager.isRecived = false
+            // 통합 데이터 매니저에서 최신 메트릭 가져오기
+            let metrics = currentMetrics
+            
+            // 거리 변화 감지 및 세그먼트 업데이트
+            let distanceDelta = metrics.distance - distanceMeter
+            if distanceDelta > 0 {
+                distanceMeter = metrics.distance
                 
                 // 세그먼트에 거리 추가
-                addDistanceToCurrentSegment(locationManager.distanceDelta)
+                addDistanceToCurrentSegment(distanceDelta)
                 
-                // 총 거리 업데이트
-                distanceMeter += locationManager.distanceDelta
-                
-                if locationManager.distanceDelta > 0 {
-                    unityService.moveCharactor(speed: statsManager.speed)
+                // Unity 캐릭터 속도 업데이트
+                if metrics.speed > 0 {
+                    unityService.moveCharactor(speed: metrics.speed)
                 }
             }
         }
@@ -223,12 +258,13 @@ class RunningViewModel: ObservableObject {
         guard let startTime = segmentStartTime else { return }
         
         let segmentDuration = Date().timeIntervalSince(startTime)
-        let segmentCalories = Int(statsManager.calories / max(1, Double(currentSegmentCount + 1))) // 현재까지 평균 칼로리
+        let segmentCalories = Int(calories / max(1, Double(currentSegmentCount + 1))) // 현재까지 평균 칼로리
         
+        let metrics = currentMetrics
         runningDataManager.addRunningSegment(
             distance: segmentDistance,
-            cadence: 0, // TODO: 실제 케이던스 데이터
-            heartRate: statsManager.bpm,
+            cadence: metrics.cadence,
+            heartRate: metrics.heartRate,
             calories: segmentCalories,
             duration: segmentDuration,
             startTimestamp: startTime.timeIntervalSince1970,
@@ -249,12 +285,13 @@ class RunningViewModel: ObservableObject {
         // 마지막에 10m 미만이라도 세그먼트로 저장
         if segmentDistance > 0, let startTime = segmentStartTime {
             let segmentDuration = Date().timeIntervalSince(startTime)
-            let segmentCalories = Int(statsManager.calories / max(1, Double(currentSegmentCount + 1)))
+            let segmentCalories = Int(calories / max(1, Double(currentSegmentCount + 1)))
+            let metrics = currentMetrics
             
             runningDataManager.addRunningSegment(
                 distance: segmentDistance,
-                cadence: 0,
-                heartRate: statsManager.bpm,
+                cadence: metrics.cadence,
+                heartRate: metrics.heartRate,
                 calories: segmentCalories,
                 duration: segmentDuration,
                 startTimestamp: startTime.timeIntervalSince1970,

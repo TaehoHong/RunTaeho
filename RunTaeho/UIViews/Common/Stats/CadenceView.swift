@@ -1,24 +1,17 @@
-//
-//  BPMView.swift
-//  RunTaeho
-//
-//  Created by Taeho Hong on 2024/03/24.
-//
-
 import SwiftUI
 
-struct BPMView: View {
-    let bpm: Int
+struct CadenceView: View {
+    let cadence: Int
     let isFromWatch: Bool
     
-    private var bpmText: String {
-        String(format: "%02d", bpm)
+    private var cadenceText: String {
+        String(format: "%03d", cadence)
     }
     
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 2) {
-                Text("BPM")
+                Text("SPM")
                     .font(CustomFont.stats())
                 if isFromWatch {
                     Image(systemName: "applewatch")
@@ -26,7 +19,7 @@ struct BPMView: View {
                         .foregroundColor(.blue)
                 }
             }
-            Text(bpmText)
+            Text(cadenceText)
                 .font(CustomFont.stats())
         }
         .frame(width: 105, height: 45)
