@@ -10,6 +10,7 @@ enum RunningState {
     case Stopped
     case Running
     case Paused
+    case Finished
 }
 
 class AppState: ObservableObject {

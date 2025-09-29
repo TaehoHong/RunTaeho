@@ -1,0 +1,4 @@
+API_BASE_URL = https:/$()/dev-api-run-taeho.com:12643
+
+
+APP_BUNDLE_ID = com.runtaeho.api-service

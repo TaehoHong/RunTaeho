@@ -1,31 +1,38 @@
+import Foundation
+
 class AuthenticationService {
     static let shared = AuthenticationService()
     private init() { }
 
-    func getToken(authType: AuthType, code: String) async throws -> UserAuthData {
-        print("code: \(code)")
+    func getToken(provider: AuthProvider, code: String) async throws -> TokenDto {
+        print("Getting token for \(provider.displayName) with code: \(code)")
+        
+        let urlPath = getOAuthPath(for: provider)
         
         return try await withCheckedThrowingContinuation { continuation in
             HTTPClient.shared.get(
-                url: "http://localhost:8080/api/v1/oauth/google",
+                urlPath: urlPath,
                 requestParam: RequestParam(params: ["code": code]),
-                responseType: UserAuthData.self
+                responseType: TokenDto.self
             ) { result in
                 switch result {
-                case .success(let authData):
-                    print("Token received: \(authData)")
-                    continuation.resume(returning: authData)
+                case .success(let tokenDto):
+                    print("Token received for \(provider.displayName): \(tokenDto)")
+                    continuation.resume(returning: tokenDto)
                 case .failure(let error):
-                    print("Error occurred: \(error)")
-                    continuation.resume(throwing: error)
+                    print("Error occurred for \(provider.displayName): \(error)")
+                    continuation.resume(throwing: AuthenticationError.networkError(error))
                 }
             }
         }
     }
-}
-
-
-enum AuthType {
-    case Google
-    case Apple
+    
+    private func getOAuthPath(for provider: AuthProvider) -> String {
+        switch provider {
+        case .GOOGLE:
+            return APIPath.Auth.googleOAuth
+        case .APPLE:
+            return APIPath.Auth.appleOAuth
+        }
+    }
 }

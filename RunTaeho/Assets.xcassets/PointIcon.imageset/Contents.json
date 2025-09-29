@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "PointIcon.png",
+      "filename" : "pointIcon.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "PointIcon@2x.png",
+      "filename" : "pointIcon@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "PointIcon@3x.png",
+      "filename" : "pointIcon@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

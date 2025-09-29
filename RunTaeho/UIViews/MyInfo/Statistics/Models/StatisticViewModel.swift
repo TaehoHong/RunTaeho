@@ -1,0 +1,144 @@
+import Foundation
+import SwiftUI
+import Combine
+
+class StatisticViewModel: ObservableObject {
+    
+    private let runningRecordService: RunningRecordService
+    private let statisticsService: RunningChartService
+    private var startDate = Date().startOfMonth()
+    
+    var hasNextData: Bool = false
+    
+    @Published var chartViewModel: RunningChartViewModel
+    
+
+    @Published var selectedPeriod: Period = .month {
+        didSet {
+            if oldValue != selectedPeriod {
+                chartViewModel.setPeriod(selectedPeriod)
+            }
+            
+            records.removeAll()
+            
+            switch selectedPeriod {
+            case .month:
+                startDate = Date().startOfMonth()
+            case .week:
+                startDate = Date().startOfWeek()
+            case .year:
+                startDate = Date().startOfYear()
+            }
+            
+            Task {
+                await self.loadRuningRecords(startDate: startDate)
+            }
+            
+        }
+    }
+    @Published var records: [RunningRecord] = [] {
+        didSet {
+            chartViewModel.updateRecords(records)
+        }
+    }
+    @Published var isLoading = false
+    @Published var error: Error?
+    var cursor: Int? = nil
+
+    
+    // 초기화
+    init() {
+        // 차트 뷰모델 생성
+        self.chartViewModel = RunningChartViewModel(period: .month)
+        self.runningRecordService = RunningRecordService.shared
+        self.statisticsService = RunningChartService.shared
+        
+        // 차트 뷰모델의 기간 변경 콜백 설정
+        chartViewModel.onPeriodChanged = { [weak self] newPeriod in
+            self?.selectedPeriod = newPeriod
+        }
+
+        Task {
+            await self.loadRuningRecords(startDate: Date().startOfMonth())
+        }
+    }
+    
+    // 필터링된 레코드
+    var filteredRecords: [RunningRecord] {
+        return statisticsService.filterRecordsByPeriod(records: records, period: selectedPeriod)
+    }
+    
+    // 통계 계산
+    var statistics: (runCount: Int, totalDistance: Double, totalDuration: TimeInterval) {
+        return statisticsService.calculateStatistics(from: filteredRecords)
+    }
+    
+    
+    @MainActor
+    func loadRuningRecords(startDate: Date, endDate: Date? = nil) async {
+        guard !isLoading else { return }
+
+        isLoading = true
+        do {
+            let runningRecordPage = try await runningRecordService.loadRuningRecords(startDate: startDate, endDate: endDate ?? Date())
+
+            // 중복 제거 로직 추가
+            let newRecords = runningRecordPage.content
+            for record in newRecords {
+                if !self.records.contains(where: { $0.id == record.id }) {
+                    self.records.append(record)
+                }
+            }
+            
+            self.isLoading = false
+            self.cursor = runningRecordPage.cursor
+            self.hasNextData = runningRecordPage.hasNext
+            
+            #if DEBUG
+            print("loadRuningRecords records count: \(runningRecordPage.content.count)")
+            print("loadRuningRecords records cursor: \(runningRecordPage.cursor)")
+            print("Total records after deduplication: \(self.records.count)")
+            #endif
+            
+        } catch {
+            self.error = error
+            print("Error loading initial records: \(error)")
+        }
+        
+        self.records.sort{ x,y in x.startTimestamp > y.startTimestamp}
+    }
+
+
+    @MainActor
+    func loadMoreRecords() async {
+        guard !isLoading else { return }
+        
+        isLoading = true
+        do {
+            let newRecordsPage = try await self.runningRecordService.loadMoreRecords(cursor: self.cursor, size: 30)
+            
+            // 중복 제거 로직 추가
+            let newRecords = newRecordsPage.content
+            for record in newRecords {
+                if !self.records.contains(where: { $0.id == record.id }) {
+                    self.records.append(record)
+                }
+            }
+            
+            self.cursor = newRecordsPage.cursor
+            self.hasNextData = newRecordsPage.hasNext
+            self.isLoading = false
+            
+            #if DEBUG
+            print("loadMoreRecords new records count: \(newRecords.count)")
+            print("Total records after deduplication: \(self.records.count)")
+            #endif
+            
+        } catch {
+            self.error = error
+            print("Error loading more records: \(error)")
+        }
+        
+        self.records.sort{ x,y in x.startTimestamp > y.startTimestamp}
+    }
+}
